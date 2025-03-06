@@ -1,6 +1,6 @@
 
 import { Link } from "react-router-dom";
-import { ChevronDown, BarChart3, Plus, List, Home } from "lucide-react";
+import { ChevronDown, BarChart3, Plus, List, Home, LogIn } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -33,6 +33,13 @@ const Navbar = () => {
         </nav>
         
         <div className="flex items-center gap-2">
+          <Link to="/admin/login">
+            <Button variant="outline" className="transition-smooth">
+              <LogIn className="h-4 w-4 mr-2" />
+              <span className="hidden sm:inline-block">Sign In</span>
+            </Button>
+          </Link>
+          
           <Link to="/create">
             <Button className="transition-smooth">
               <Plus className="h-4 w-4 mr-2" />
@@ -63,6 +70,12 @@ const Navbar = () => {
                 <Link to="/help">
                   <BarChart3 className="h-4 w-4 mr-2" />
                   How It Works
+                </Link>
+              </DropdownMenuItem>
+              <DropdownMenuItem asChild>
+                <Link to="/admin/login">
+                  <LogIn className="h-4 w-4 mr-2" />
+                  Sign In
                 </Link>
               </DropdownMenuItem>
             </DropdownMenuContent>
