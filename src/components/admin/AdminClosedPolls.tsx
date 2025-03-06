@@ -4,7 +4,7 @@ import { useNavigate } from "react-router-dom";
 import { Calendar, ExternalLink, BarChart2, Trash2 } from "lucide-react";
 
 import { useToast } from "@/hooks/use-toast";
-import { getAllPolls, updatePoll, getPoll, computeResults } from "@/lib/db";
+import { getAllPolls, deletePoll } from "@/lib/db";
 import type { Poll } from "@/lib/db";
 import { Button } from "@/components/ui/button";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from "@/components/ui/card";
@@ -53,18 +53,12 @@ const AdminClosedPolls = () => {
     if (!pollToDelete) return;
 
     try {
-      // This would need an actual delete function in the db.ts file
-      // For now, let's simulate by updating a field
-      const poll = await getPoll(pollToDelete);
-      if (poll) {
-        poll.isOpen = false; // Ensure it's marked as closed
-        await updatePoll(poll);
-        toast({
-          title: "Poll deleted",
-          description: "The poll has been deleted successfully",
-        });
-        fetchPolls(); // Refresh the list
-      }
+      await deletePoll(pollToDelete);
+      toast({
+        title: "Poll deleted",
+        description: "The poll has been deleted successfully",
+      });
+      fetchPolls(); // Refresh the list
     } catch (error) {
       toast({
         title: "Error",
