@@ -1,5 +1,5 @@
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
@@ -14,14 +14,9 @@ interface CreatedPollData {
 }
 
 const CreatePoll = () => {
-  const { initialize } = useDatabase();
+  const { initialized } = useDatabase();
   const [showShareDialog, setShowShareDialog] = useState(false);
   const [createdPoll, setCreatedPoll] = useState<CreatedPollData | null>(null);
-
-  // Initialize database on mount
-  useEffect(() => {
-    initialize();
-  }, []);
 
   const handlePollCreated = (pollId: string, pollTitle: string) => {
     setCreatedPoll({ id: pollId, title: pollTitle });

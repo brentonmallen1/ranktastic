@@ -16,19 +16,22 @@ import AdminSettings from "./pages/admin/Settings";
 import ProtectedRoute from "./components/ProtectedRoute";
 import { useDatabase } from "./lib/db";
 
-const queryClient = new QueryClient();
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      retry: 1,
+      refetchOnWindowFocus: false,
+    },
+  },
+});
 
 const AppContent = () => {
-  const { initialize } = useDatabase();
-  const [initAttempted, setInitAttempted] = useState(false);
+  const { initialize, initialized } = useDatabase();
   
   useEffect(() => {
     // Initialize database only once when app loads
-    if (!initAttempted) {
-      setInitAttempted(true);
-      initialize();
-    }
-  }, [initAttempted]);
+    initialize();
+  }, []);
   
   return (
     <Routes>

@@ -1,5 +1,6 @@
-import { useState, useEffect, useRef } from "react";
-import { useNavigate, Link } from "react-router-dom";
+
+import { useState, useRef } from "react";
+import { useNavigate } from "react-router-dom";
 import { LogOut, Settings, Home, RefreshCw } from "lucide-react";
 
 import { logout } from "@/lib/auth";
@@ -16,13 +17,6 @@ const AdminDashboard = () => {
   const [activeTab, setActiveTab] = useState("open");
   const { initialized, retry, initializing, initializationError } = useDatabase();
   const retryAttempted = useRef(false);
-
-  useEffect(() => {
-    if (!initialized && !initializing && !retryAttempted.current) {
-      retryAttempted.current = true;
-      retry();
-    }
-  }, [initialized, initializing]);
 
   const handleLogout = () => {
     logout();

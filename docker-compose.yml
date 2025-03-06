@@ -13,6 +13,8 @@ services:
     depends_on:
       - backend
     restart: unless-stopped
+    networks:
+      - app-network
 
   backend:
     build:
@@ -27,3 +29,9 @@ services:
       - NODE_ENV=production
       - CORS_ORIGIN=http://localhost:8080,http://frontend:80
     restart: unless-stopped
+    networks:
+      - app-network
+
+networks:
+  app-network:
+    driver: bridge

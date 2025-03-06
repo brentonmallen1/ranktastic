@@ -40,6 +40,12 @@ export const safeParseResponse = async (response: Response) => {
   console.log(`Response content-type: ${contentType}`);
   
   const text = await response.text();
+  
+  // If no content (like 204 responses), return null
+  if (!text.trim()) {
+    return null;
+  }
+  
   console.log(`Response text snippet: ${text.substring(0, 100)}...`);
   
   // If it's JSON, parse it
@@ -58,5 +64,6 @@ export const safeParseResponse = async (response: Response) => {
     throw new Error('Received HTML instead of API JSON response. Server configuration issue.');
   }
   
+  // For other response types, return the text
   return text;
 };
