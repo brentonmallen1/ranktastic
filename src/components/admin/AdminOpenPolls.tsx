@@ -13,7 +13,7 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 const AdminOpenPolls = () => {
   const { toast } = useToast();
   const navigate = useNavigate();
-  const { initialized, initialize } = useDatabase();
+  const { initialized } = useDatabase();
   const [polls, setPolls] = useState<Poll[]>([]);
   const [loading, setLoading] = useState(true);
   const [pollToDelete, setPollToDelete] = useState<string | null>(null);
@@ -21,9 +21,12 @@ const AdminOpenPolls = () => {
   const fetchPolls = async () => {
     setLoading(true);
     try {
+      console.log("Fetching open polls...");
       const allPolls = await getAllPolls();
+      console.log("All polls fetched:", allPolls);
       // Filter only open polls
       const openPolls = allPolls.filter(poll => poll.isOpen);
+      console.log("Open polls:", openPolls);
       setPolls(openPolls);
     } catch (error) {
       console.error("Failed to fetch polls:", error);
@@ -38,27 +41,19 @@ const AdminOpenPolls = () => {
   };
 
   useEffect(() => {
-    const loadPolls = async () => {
-      if (initialized) {
-        await fetchPolls();
-      } else {
-        const success = await initialize();
-        if (success) {
-          await fetchPolls();
-        }
-      }
-    };
-    
-    loadPolls();
-  }, [initialized, initialize]);
+    if (initialized) {
+      console.log("Database initialized, fetching open polls");
+      fetchPolls();
+    } else {
+      console.log("Database not initialized yet");
+    }
+  }, [initialized]);
 
   const handleViewPoll = (pollId: string) => {
     navigate(`/poll/${pollId}`);
   };
 
   const handleEditPoll = (pollId: string) => {
-    // For now, we'll just view the poll
-    // In a more complete implementation, this would open an edit interface
     navigate(`/poll/${pollId}`);
   };
 
@@ -69,7 +64,7 @@ const AdminOpenPolls = () => {
         title: "Poll closed",
         description: "The poll has been closed successfully",
       });
-      fetchPolls(); // Refresh the list
+      fetchPolls();
     } catch (error) {
       toast({
         title: "Error",
@@ -88,7 +83,7 @@ const AdminOpenPolls = () => {
         title: "Poll deleted",
         description: "The poll has been deleted successfully",
       });
-      fetchPolls(); // Refresh the list
+      fetchPolls();
     } catch (error) {
       toast({
         title: "Error",

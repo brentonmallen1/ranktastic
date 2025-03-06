@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Edit, Lock, Trash2 } from "lucide-react";
@@ -24,12 +23,14 @@ const AdminPollControls = ({ pollId, isOpen, onPollUpdated }: AdminPollControlsP
   
   // Only render if user is authenticated as admin and we have a valid pollId
   if (!isAuthenticated() || !pollId) {
+    console.log("Not rendering AdminPollControls", { authenticated: isAuthenticated(), pollId });
     return null;
   }
 
   const handleClosePoll = async () => {
     try {
       setIsClosing(true);
+      console.log("Closing poll:", pollId);
       await closePoll(pollId);
       toast({
         title: "Poll closed",
@@ -51,6 +52,7 @@ const AdminPollControls = ({ pollId, isOpen, onPollUpdated }: AdminPollControlsP
   const handleDeletePoll = async () => {
     try {
       setIsDeleting(true);
+      console.log("Deleting poll:", pollId);
       await deletePoll(pollId);
       toast({
         title: "Poll deleted",

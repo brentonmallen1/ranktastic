@@ -13,7 +13,7 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 const AdminClosedPolls = () => {
   const { toast } = useToast();
   const navigate = useNavigate();
-  const { initialized, initialize } = useDatabase();
+  const { initialized } = useDatabase();
   const [polls, setPolls] = useState<Poll[]>([]);
   const [loading, setLoading] = useState(true);
   const [pollToDelete, setPollToDelete] = useState<string | null>(null);
@@ -21,9 +21,12 @@ const AdminClosedPolls = () => {
   const fetchPolls = async () => {
     setLoading(true);
     try {
+      console.log("Fetching closed polls...");
       const allPolls = await getAllPolls();
+      console.log("All polls fetched:", allPolls);
       // Filter only closed polls
       const closedPolls = allPolls.filter(poll => !poll.isOpen);
+      console.log("Closed polls:", closedPolls);
       setPolls(closedPolls);
     } catch (error) {
       console.error("Failed to fetch polls:", error);
@@ -38,19 +41,13 @@ const AdminClosedPolls = () => {
   };
 
   useEffect(() => {
-    const loadPolls = async () => {
-      if (initialized) {
-        await fetchPolls();
-      } else {
-        const success = await initialize();
-        if (success) {
-          await fetchPolls();
-        }
-      }
-    };
-    
-    loadPolls();
-  }, [initialized, initialize]);
+    if (initialized) {
+      console.log("Database initialized, fetching closed polls");
+      fetchPolls();
+    } else {
+      console.log("Database not initialized yet");
+    }
+  }, [initialized]);
 
   const handleViewPoll = (pollId: string) => {
     navigate(`/poll/${pollId}`);

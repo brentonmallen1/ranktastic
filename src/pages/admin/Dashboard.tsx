@@ -1,7 +1,7 @@
 
 import { useState, useEffect } from "react";
 import { useNavigate, Link } from "react-router-dom";
-import { LogOut, Settings } from "lucide-react";
+import { LogOut, Settings, Home } from "lucide-react";
 
 import { logout } from "@/lib/auth";
 import { useDatabase } from "@/lib/db";
@@ -58,7 +58,13 @@ const AdminDashboard = () => {
   return (
     <div className="container py-8 mx-auto">
       <div className="flex justify-between items-center mb-6">
-        <h1 className="text-3xl font-bold">Admin Dashboard</h1>
+        <div className="flex items-center gap-2">
+          <Button variant="outline" size="sm" onClick={() => navigate("/")}>
+            <Home className="mr-2 h-4 w-4" />
+            Main Site
+          </Button>
+          <h1 className="text-3xl font-bold ml-2">Admin Dashboard</h1>
+        </div>
         <div className="flex gap-2">
           <Button variant="outline" onClick={() => navigate("/admin/settings")}>
             <Settings className="mr-2 h-4 w-4" />
