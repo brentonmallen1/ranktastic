@@ -8,6 +8,7 @@ import Index from "./pages/Index";
 import CreatePoll from "./pages/CreatePoll";
 import NotFound from "./pages/NotFound";
 import HelpPage from "./pages/HelpPage";
+import PollPage from "./pages/PollPage";
 
 const queryClient = new QueryClient();
 

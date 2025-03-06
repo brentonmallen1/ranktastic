@@ -93,7 +93,7 @@ const PollPage = () => {
           )}
           
           {poll.isOpen ? (
-            <VotingForm pollId={poll.id} options={poll.options} />
+            <VotingForm poll={poll} onVoteSubmitted={() => setPoll({...poll, isOpen: false})} />
           ) : (
             <PollResults pollId={poll.id} />
           )}
