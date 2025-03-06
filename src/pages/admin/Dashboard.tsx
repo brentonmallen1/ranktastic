@@ -1,7 +1,7 @@
 
 import { useState, useEffect } from "react";
 import { useNavigate, Link } from "react-router-dom";
-import { LogOut, Settings, Home } from "lucide-react";
+import { LogOut, Settings, Home, RefreshCw } from "lucide-react";
 
 import { logout } from "@/lib/auth";
 import { useDatabase } from "@/lib/db";
@@ -15,41 +15,60 @@ const AdminDashboard = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const [activeTab, setActiveTab] = useState("open");
-  const { initialized, initialize } = useDatabase();
-  const [dbInitialized, setDbInitialized] = useState(false);
+  const { initialized, initialize, initializing } = useDatabase();
+  const [retryCount, setRetryCount] = useState(0);
 
   useEffect(() => {
     // Initialize the database if not already initialized
     const initDb = async () => {
-      if (!initialized) {
+      if (!initialized && !initializing) {
+        console.log("Attempting to initialize database, retry:", retryCount);
         const success = await initialize();
         if (!success) {
           toast({
-            title: "Database Error",
-            description: "Failed to initialize the database. Please refresh the page.",
+            title: "Database Connection Error",
+            description: "Failed to connect to the database. Please check if the backend is running.",
             variant: "destructive",
           });
         }
-        setDbInitialized(success);
-      } else {
-        setDbInitialized(true);
       }
     };
     
     initDb();
-  }, [initialized, initialize, toast]);
+  }, [initialized, initializing, retryCount, initialize, toast]);
 
   const handleLogout = () => {
     logout();
     navigate("/admin/login");
   };
 
-  if (!dbInitialized) {
+  const handleRetry = () => {
+    setRetryCount(prev => prev + 1);
+  };
+
+  if (!initialized) {
     return (
-      <div className="container py-8 mx-auto">
-        <div className="text-center">
-          <h2 className="text-xl font-semibold mb-2">Initializing Database...</h2>
-          <p className="text-gray-500">Please wait while we set up your dashboard.</p>
+      <div className="container flex flex-col items-center justify-center min-h-[80vh] py-8 mx-auto">
+        <div className="text-center mb-6">
+          <h2 className="text-2xl font-semibold mb-2">Connecting to Database...</h2>
+          <p className="text-gray-500 mb-6">Please wait while we connect to the backend server.</p>
+          {initializing ? (
+            <div className="flex justify-center">
+              <RefreshCw className="h-8 w-8 animate-spin text-primary" />
+            </div>
+          ) : (
+            <div className="flex flex-col items-center gap-4">
+              <p className="text-red-500">Failed to connect to the database server.</p>
+              <Button onClick={handleRetry}>
+                <RefreshCw className="mr-2 h-4 w-4" />
+                Retry Connection
+              </Button>
+              <Button variant="outline" onClick={() => navigate("/")}>
+                <Home className="mr-2 h-4 w-4" />
+                Return to Home
+              </Button>
+            </div>
+          )}
         </div>
       </div>
     );

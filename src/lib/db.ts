@@ -1,8 +1,9 @@
+
 import { useToast } from "@/hooks/use-toast";
 import { useEffect, useState } from "react";
 
-// API base URL - adjust as needed for production
-const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:3001/api";
+// API base URL - using relative URL to respect host origin
+const API_BASE_URL = import.meta.env.VITE_API_URL || "/api";
 
 // Database schema
 interface Poll {
@@ -27,8 +28,10 @@ interface Vote {
 // Initialize DB is now a mock function for API compatibility
 export const initDB = async (): Promise<boolean> => {
   try {
+    console.log(`Connecting to API at ${API_BASE_URL}`);
     // Test API connection
     const response = await fetch(`${API_BASE_URL}/polls?limit=1`);
+    console.log(`API connection response:`, response);
     return response.ok;
   } catch (error) {
     console.error("Error connecting to API:", error);
@@ -335,11 +338,27 @@ export const computeResults = async (pollId: string): Promise<{
 export const useDatabase = () => {
   const { toast } = useToast();
   const [initialized, setInitialized] = useState(false);
+  const [initializing, setInitializing] = useState(false);
   
   const initialize = async () => {
+    if (initializing) return false;
+    
     try {
+      setInitializing(true);
+      console.log("Attempting to initialize database connection");
       const success = await initDB();
+      console.log("Database initialization result:", success);
       setInitialized(success);
+      setInitializing(false);
+      
+      if (!success) {
+        toast({
+          title: "API Connection Error",
+          description: "Failed to connect to the server API. Please make sure the backend server is running.",
+          variant: "destructive",
+        });
+      }
+      
       return success;
     } catch (error) {
       console.error("Failed to initialize database connection:", error);
@@ -348,6 +367,7 @@ export const useDatabase = () => {
         description: "Failed to connect to the server API. Some features may not work correctly.",
         variant: "destructive",
       });
+      setInitializing(false);
       return false;
     }
   };
@@ -356,7 +376,7 @@ export const useDatabase = () => {
     initialize();
   }, []);
 
-  return { initialize, initialized };
+  return { initialize, initialized, initializing };
 };
 
 // Export types
