@@ -1,8 +1,23 @@
+
 import { useToast } from "@/hooks/use-toast";
 import { useEffect, useState } from "react";
 
 // API base URL - using relative URL to respect host origin
 const API_BASE_URL = import.meta.env.VITE_API_URL || "/api";
+
+// Debug helper for logging API requests
+const logRequest = (method: string, url: string, body?: any) => {
+  console.log(`API ${method} Request to: ${url}`);
+  if (body) {
+    console.log('Request payload:', body);
+  }
+};
+
+// Debug helper for logging API responses
+const logResponse = (method: string, url: string, status: number, data: any) => {
+  console.log(`API ${method} Response from ${url}: Status ${status}`);
+  console.log('Response data:', data);
+};
 
 // Database schema
 interface Poll {
@@ -28,21 +43,49 @@ interface Vote {
 export const initDB = async (): Promise<boolean> => {
   try {
     console.log(`Connecting to API at ${API_BASE_URL}`);
-    // Test API connection
+    
+    // Test initial connection to base API endpoint
+    try {
+      const baseResponse = await fetch(`${API_BASE_URL}/`);
+      console.log(`Base API response status: ${baseResponse.status}`);
+      
+      if (baseResponse.ok) {
+        const baseData = await baseResponse.text();
+        console.log(`Base API response: ${baseData.substring(0, 100)}...`);
+      } else {
+        console.error(`Base API request failed with status: ${baseResponse.status}`);
+      }
+    } catch (baseError) {
+      console.error("Error connecting to base API:", baseError);
+    }
+    
+    // Test API health check endpoint
     const response = await fetch(`${API_BASE_URL}/health`);
     
-    console.log(`API health check response:`, response);
+    console.log(`API health check response status: ${response.status}`);
     
     if (!response.ok) {
       console.error(`API health check failed with status: ${response.status}`);
-      const errorText = await response.text();
-      console.error(`Error response:`, errorText);
+      try {
+        const errorText = await response.text();
+        console.error(`Error response body:`, errorText);
+      } catch (readError) {
+        console.error(`Could not read error response: ${readError}`);
+      }
       return false;
     }
+    
+    const responseData = await response.json();
+    console.log(`API health check response data:`, responseData);
     
     return true;
   } catch (error) {
     console.error("Error connecting to API:", error);
+    console.error("Error details:", {
+      name: error.name,
+      message: error.message,
+      stack: error.stack
+    });
     return false;
   }
 };
@@ -51,9 +94,12 @@ export const initDB = async (): Promise<boolean> => {
 export const createPoll = async (poll: Omit<Poll, "id" | "createdAt">): Promise<string> => {
   try {
     console.log(`Creating poll with data:`, poll);
-    console.log(`Sending request to: ${API_BASE_URL}/polls`);
+    const apiUrl = `${API_BASE_URL}/polls`;
+    console.log(`Sending request to: ${apiUrl}`);
     
-    const response = await fetch(`${API_BASE_URL}/polls`, {
+    logRequest('POST', apiUrl, poll);
+    
+    const response = await fetch(apiUrl, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -62,16 +108,38 @@ export const createPoll = async (poll: Omit<Poll, "id" | "createdAt">): Promise<
     });
 
     console.log(`Create poll response status:`, response.status);
+    console.log(`Response headers:`, Object.fromEntries([...response.headers.entries()]));
+    
+    let responseData;
+    try {
+      responseData = await response.text();
+      console.log(`Raw response:`, responseData);
+      
+      // Try to parse as JSON if possible
+      if (responseData && responseData.trim().startsWith('{')) {
+        responseData = JSON.parse(responseData);
+      }
+    } catch (parseError) {
+      console.error(`Error parsing response:`, parseError);
+    }
     
     if (!response.ok) {
-      const errorText = await response.text();
-      console.error(`Error response:`, errorText);
-      throw new Error(`Failed to create poll: ${response.status} ${errorText}`);
+      const errorDetails = typeof responseData === 'object' ? responseData : { raw: responseData };
+      console.error(`Error response:`, errorDetails);
+      throw new Error(`Failed to create poll: ${response.status} ${JSON.stringify(errorDetails)}`);
     }
 
-    const data = await response.json();
-    console.log(`Create poll success, received:`, data);
-    return data.id;
+    if (typeof responseData === 'string') {
+      try {
+        responseData = JSON.parse(responseData);
+      } catch (e) {
+        console.error('Failed to parse response as JSON:', e);
+        throw new Error(`Invalid response format: ${responseData}`);
+      }
+    }
+    
+    console.log(`Create poll success, received:`, responseData);
+    return responseData.id;
   } catch (error) {
     console.error("Error creating poll:", error);
     throw error;
@@ -148,13 +216,22 @@ export const deletePoll = async (id: string): Promise<boolean> => {
 
 export const getAllPolls = async (): Promise<Poll[]> => {
   try {
-    const response = await fetch(`${API_BASE_URL}/polls`);
+    const apiUrl = `${API_BASE_URL}/polls`;
+    console.log(`Fetching all polls from: ${apiUrl}`);
+    
+    logRequest('GET', apiUrl);
+    
+    const response = await fetch(apiUrl);
+    console.log(`Get all polls response status:`, response.status);
 
     if (!response.ok) {
-      throw new Error("Failed to get polls");
+      const errorText = await response.text();
+      console.error(`Error response:`, errorText);
+      throw new Error(`Failed to get polls: ${response.status} ${errorText}`);
     }
 
     const polls = await response.json();
+    logResponse('GET', apiUrl, response.status, polls);
     
     // Convert date strings to Date objects
     return polls.map((poll: any) => ({
@@ -355,24 +432,48 @@ export const useDatabase = () => {
   const { toast } = useToast();
   const [initialized, setInitialized] = useState(false);
   const [initializing, setInitializing] = useState(false);
+  const [initializationError, setInitializationError] = useState<string | null>(null);
   
   const initialize = async () => {
     if (initializing) return false;
     
     try {
       setInitializing(true);
+      setInitializationError(null);
       console.log("Attempting to initialize database connection");
       console.log(`API URL from env: ${import.meta.env.VITE_API_URL}`);
       console.log(`Using API URL: ${API_BASE_URL}`);
       
+      // Output environment info for debugging
+      console.log("Environment information:");
+      console.log(`- Base URL: ${window.location.origin}`);
+      console.log(`- Current pathname: ${window.location.pathname}`);
+      
       // First try a basic fetch to see if we can reach the API at all
       try {
+        console.log("Testing basic API connectivity...");
         const basicResponse = await fetch(`${API_BASE_URL}/`);
-        console.log(`Basic API response:`, basicResponse);
+        console.log(`Basic API response status: ${basicResponse.status}`);
         const responseText = await basicResponse.text();
-        console.log(`Basic API response text:`, responseText.substring(0, 100) + "...");
+        console.log(`Basic API response text: ${responseText.substring(0, 100)}...`);
+        
+        // Test API routes listing
+        try {
+          console.log("Testing API routes listing...");
+          const routesResponse = await fetch(`${API_BASE_URL}/`);
+          if (routesResponse.ok) {
+            const routesData = await routesResponse.json();
+            console.log("Available API routes:", routesData);
+          } else {
+            console.log(`Routes listing failed: ${routesResponse.status}`);
+          }
+        } catch (routesError) {
+          console.error("Error with API routes listing:", routesError);
+        }
+        
       } catch (err) {
         console.error("Error with basic API fetch:", err);
+        setInitializationError(`Basic API connectivity failed: ${err.message}`);
       }
       
       const success = await initDB();
@@ -381,16 +482,20 @@ export const useDatabase = () => {
       setInitializing(false);
       
       if (!success) {
+        const errorMsg = "Failed to connect to the server API. Please try refreshing the page or check that the backend is running.";
+        setInitializationError(errorMsg);
         toast({
           title: "API Connection Error",
-          description: "Failed to connect to the server API. Please try refreshing the page or check that the backend is running.",
+          description: errorMsg,
           variant: "destructive",
         });
       }
       
       return success;
     } catch (error) {
-      console.error("Failed to initialize database connection:", error);
+      const errorMsg = `Failed to connect to the server API: ${error.message}`;
+      console.error(errorMsg, error);
+      setInitializationError(errorMsg);
       toast({
         title: "API Connection Error",
         description: "Failed to connect to the server API. Some features may not work correctly.",
@@ -405,7 +510,12 @@ export const useDatabase = () => {
     initialize();
   }, []);
 
-  return { initialize, initialized, initializing };
+  return { 
+    initialize, 
+    initialized, 
+    initializing,
+    initializationError
+  };
 };
 
 // Export types

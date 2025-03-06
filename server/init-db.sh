@@ -56,6 +56,22 @@ else
     echo "Database already exists, skipping initialization."
 fi
 
+# Check if routes directory exists and output for debugging
+echo "Checking for routes directory..."
+if [ -d "/app/routes" ]; then
+    echo "Routes directory exists at /app/routes"
+    ls -la /app/routes
+else
+    echo "Routes directory NOT found at /app/routes!"
+    echo "Current directory structure:"
+    find /app -type d | sort
+fi
+
+# Print server.js content for debugging
+echo "====== SERVER.JS CONTENT ======"
+cat /app/server.js
+echo "=============================="
+
 # Make sure server is configured to handle API routes properly
 echo "========== Environment Variables =========="
 env

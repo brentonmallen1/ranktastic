@@ -17,6 +17,9 @@ COPY . .
 COPY init-db.sh /app/
 RUN chmod +x /app/init-db.sh
 
+# Print directory structure for debugging
+RUN echo "Server directory structure:" && ls -la /app
+
 # Expose the port the app runs on
 EXPOSE 3001
 
