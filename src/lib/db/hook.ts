@@ -34,7 +34,7 @@ export const useDatabase = () => {
         setInitializing(false);
         return true;
       } else {
-        const errorMsg = "Failed to connect to the server API. Please try again.";
+        const errorMsg = "Failed to connect to the server API. Please check server status and network connection.";
         setInitializationError(errorMsg);
         setInitialized(false);
         
@@ -48,7 +48,7 @@ export const useDatabase = () => {
         }
         
         // Increment retry counter but don't automatically retry
-        setRetries(retries + 1);
+        setRetries((prev) => prev + 1);
         setInitializing(false);
         return false;
       }
@@ -61,7 +61,7 @@ export const useDatabase = () => {
       if (retries === 0) {
         toast({
           title: "API Connection Error",
-          description: "Failed to connect to the server API. Please try again later.",
+          description: "Failed to connect to the server API. Please check server status and network connection.",
           variant: "destructive",
         });
       }

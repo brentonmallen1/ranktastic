@@ -56,6 +56,21 @@ else
     echo "Database already exists, skipping initialization."
 fi
 
+# Create health check endpoint to ensure API is properly set up
+echo "Adding health check endpoint..."
+mkdir -p /app/routes
+cat > /app/health-check.js << 'EOF'
+// Simple health check endpoint
+const express = require('express');
+const router = express.Router();
+
+router.get('/health', (req, res) => {
+  res.json({ status: 'ok', timestamp: new Date().toISOString() });
+});
+
+module.exports = router;
+EOF
+
 # Print environment variables for debugging
 echo "========== Environment Variables =========="
 env
