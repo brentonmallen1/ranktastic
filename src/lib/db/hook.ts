@@ -10,6 +10,8 @@ export const useDatabase = () => {
   const [initialized, setInitialized] = useState(false);
   const [initializing, setInitializing] = useState(false);
   const [initializationError, setInitializationError] = useState<string | null>(null);
+  const [retries, setRetries] = useState(0);
+  const MAX_RETRIES = 3;
   
   const initialize = async () => {
     if (initializing) return false;
@@ -25,6 +27,7 @@ export const useDatabase = () => {
       console.log("Environment information:");
       console.log(`- Base URL: ${window.location.origin}`);
       console.log(`- Current pathname: ${window.location.pathname}`);
+      console.log(`- Retries: ${retries}/${MAX_RETRIES}`);
       
       // First try a basic fetch to see if we can reach the API at all
       try {
@@ -34,20 +37,11 @@ export const useDatabase = () => {
         const responseText = await basicResponse.text();
         console.log(`Basic API response text: ${responseText.substring(0, 100)}...`);
         
-        // Test API routes listing
-        try {
-          console.log("Testing API routes listing...");
-          const routesResponse = await fetch(`${API_BASE_URL}/`);
-          if (routesResponse.ok) {
-            const routesData = await routesResponse.json();
-            console.log("Available API routes:", routesData);
-          } else {
-            console.log(`Routes listing failed: ${routesResponse.status}`);
-          }
-        } catch (routesError) {
-          console.error("Error with API routes listing:", routesError);
+        // Check if we're getting HTML instead of API response
+        if (responseText.includes('<!DOCTYPE html>') || responseText.includes('<html')) {
+          console.warn('Basic API endpoint is returning HTML instead of API data. This indicates a routing issue in the server.');
+          console.warn('Make sure your NGINX config is routing /api to the correct backend service.');
         }
-        
       } catch (err) {
         console.error("Error with basic API fetch:", err);
         setInitializationError(`Basic API connectivity failed: ${err.message}`);
@@ -55,29 +49,52 @@ export const useDatabase = () => {
       
       const success = await initDB();
       console.log("Database initialization result:", success);
-      setInitialized(success);
-      setInitializing(false);
       
-      if (!success) {
+      if (success) {
+        setInitialized(true);
+        setInitializing(false);
+        return true;
+      } else {
         const errorMsg = "Failed to connect to the server API. Please try refreshing the page or check that the backend is running.";
         setInitializationError(errorMsg);
-        toast({
-          title: "API Connection Error",
-          description: errorMsg,
-          variant: "destructive",
-        });
+        setInitialized(false);
+        
+        // Only show toast error on first failure or every third retry
+        if (retries === 0 || retries % 3 === 0) {
+          toast({
+            title: "API Connection Error",
+            description: errorMsg,
+            variant: "destructive",
+          });
+        }
+        
+        // Increment retry counter and try again if under max retries
+        if (retries < MAX_RETRIES) {
+          setRetries(retries + 1);
+          console.log(`Retrying API connection (${retries + 1}/${MAX_RETRIES})...`);
+          setTimeout(() => {
+            setInitializing(false);
+            initialize();
+          }, 3000); // Wait 3 seconds before retrying
+        } else {
+          console.error(`Max retries (${MAX_RETRIES}) reached. Giving up on API connection.`);
+          setInitializing(false);
+        }
+        
+        return false;
       }
-      
-      return success;
     } catch (error) {
       const errorMsg = `Failed to connect to the server API: ${error.message}`;
       console.error(errorMsg, error);
       setInitializationError(errorMsg);
+      setInitialized(false);
+      
       toast({
         title: "API Connection Error",
         description: "Failed to connect to the server API. Some features may not work correctly.",
         variant: "destructive",
       });
+      
       setInitializing(false);
       return false;
     }
@@ -91,6 +108,10 @@ export const useDatabase = () => {
     initialize, 
     initialized, 
     initializing,
-    initializationError
+    initializationError,
+    retry: () => {
+      setRetries(0);
+      return initialize();
+    }
   };
 };

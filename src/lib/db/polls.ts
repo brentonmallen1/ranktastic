@@ -1,5 +1,4 @@
-
-import { API_BASE_URL, logRequest, logResponse } from './config';
+import { API_BASE_URL, logRequest, logResponse, logError, safeParseResponse } from './config';
 import type { Poll } from './types';
 
 // Poll CRUD operations
@@ -22,38 +21,34 @@ export const createPoll = async (poll: Omit<Poll, "id" | "createdAt">): Promise<
     console.log(`Create poll response status:`, response.status);
     console.log(`Response headers:`, Object.fromEntries([...response.headers.entries()]));
     
-    let responseData;
-    try {
-      responseData = await response.text();
-      console.log(`Raw response:`, responseData);
-      
-      // Try to parse as JSON if possible
-      if (responseData && responseData.trim().startsWith('{')) {
-        responseData = JSON.parse(responseData);
-      }
-    } catch (parseError) {
-      console.error(`Error parsing response:`, parseError);
-    }
-    
     if (!response.ok) {
-      const errorDetails = typeof responseData === 'object' ? responseData : { raw: responseData };
-      console.error(`Error response:`, errorDetails);
-      throw new Error(`Failed to create poll: ${response.status} ${JSON.stringify(errorDetails)}`);
+      // For 404 errors, add extra debugging info
+      if (response.status === 404) {
+        console.error(`404 Not Found: The API endpoint ${apiUrl} could not be found.`);
+        console.error(`Check that the server has the /polls route configured properly.`);
+        console.error(`Also verify that the VITE_API_URL (${import.meta.env.VITE_API_URL}) is correct.`);
+      }
+      
+      const errorText = await response.text();
+      console.error(`Error response:`, errorText);
+      throw new Error(`Failed to create poll: ${response.status} ${errorText}`);
     }
 
-    if (typeof responseData === 'string') {
-      try {
-        responseData = JSON.parse(responseData);
-      } catch (e) {
-        console.error('Failed to parse response as JSON:', e);
-        throw new Error(`Invalid response format: ${responseData}`);
+    try {
+      const responseData = await safeParseResponse(response);
+      logResponse('POST', apiUrl, response.status, responseData);
+      
+      if (!responseData.id) {
+        throw new Error(`Invalid response: missing poll ID: ${JSON.stringify(responseData)}`);
       }
+      
+      return responseData.id;
+    } catch (parseError) {
+      logError('POST', apiUrl, parseError);
+      throw parseError;
     }
-    
-    console.log(`Create poll success, received:`, responseData);
-    return responseData.id;
   } catch (error) {
-    console.error("Error creating poll:", error);
+    logError('POST', `${API_BASE_URL}/polls`, error);
     throw error;
   }
 };
@@ -135,24 +130,36 @@ export const getAllPolls = async (): Promise<Poll[]> => {
     
     const response = await fetch(apiUrl);
     console.log(`Get all polls response status:`, response.status);
+    console.log(`Response headers:`, Object.fromEntries([...response.headers.entries()]));
 
     if (!response.ok) {
+      // For 404 errors, add extra debugging info
+      if (response.status === 404) {
+        console.error(`404 Not Found: The API endpoint ${apiUrl} could not be found.`);
+        console.error(`Check that the server has the /polls route configured properly.`);
+      }
+      
       const errorText = await response.text();
       console.error(`Error response:`, errorText);
       throw new Error(`Failed to get polls: ${response.status} ${errorText}`);
     }
 
-    const polls = await response.json();
-    logResponse('GET', apiUrl, response.status, polls);
-    
-    // Convert date strings to Date objects
-    return polls.map((poll: any) => ({
-      ...poll,
-      createdAt: new Date(poll.createdAt),
-      expiresAt: poll.expiresAt ? new Date(poll.expiresAt) : null,
-    }));
+    try {
+      const polls = await safeParseResponse(response);
+      logResponse('GET', apiUrl, response.status, polls);
+      
+      // Convert date strings to Date objects
+      return polls.map((poll: any) => ({
+        ...poll,
+        createdAt: new Date(poll.createdAt),
+        expiresAt: poll.expiresAt ? new Date(poll.expiresAt) : null,
+      }));
+    } catch (parseError) {
+      logError('GET', apiUrl, parseError);
+      throw parseError;
+    }
   } catch (error) {
-    console.error("Error getting polls:", error);
+    logError('GET', `${API_BASE_URL}/polls`, error);
     throw error;
   }
 };

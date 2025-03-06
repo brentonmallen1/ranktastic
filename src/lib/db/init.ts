@@ -1,5 +1,5 @@
 
-import { API_BASE_URL } from './config';
+import { API_BASE_URL, logRequest, logResponse, logError, safeParseResponse } from './config';
 
 // Initialize DB is now a mock function for API compatibility
 export const initDB = async (): Promise<boolean> => {
@@ -8,23 +8,38 @@ export const initDB = async (): Promise<boolean> => {
     
     // Test initial connection to base API endpoint
     try {
+      logRequest('GET', `${API_BASE_URL}/`);
       const baseResponse = await fetch(`${API_BASE_URL}/`);
       console.log(`Base API response status: ${baseResponse.status}`);
       
       if (baseResponse.ok) {
         const baseData = await baseResponse.text();
         console.log(`Base API response: ${baseData.substring(0, 100)}...`);
+        
+        // Check if we're getting HTML instead of API response
+        if (baseData.includes('<!DOCTYPE html>') || baseData.includes('<html')) {
+          console.warn('Base API endpoint is returning HTML instead of API response. Check server routing configuration.');
+        }
       } else {
         console.error(`Base API request failed with status: ${baseResponse.status}`);
       }
     } catch (baseError) {
-      console.error("Error connecting to base API:", baseError);
+      logError('GET', `${API_BASE_URL}/`, baseError);
     }
     
+    // Log environment variables for debugging
+    console.log('Environment configuration:');
+    console.log(`- VITE_API_URL: ${import.meta.env.VITE_API_URL}`);
+    console.log(`- Current origin: ${window.location.origin}`);
+    console.log(`- Current path: ${window.location.pathname}`);
+    console.log(`- Actual API_BASE_URL used: ${API_BASE_URL}`);
+    
     // Test API health check endpoint
+    logRequest('GET', `${API_BASE_URL}/health`);
     const response = await fetch(`${API_BASE_URL}/health`);
     
     console.log(`API health check response status: ${response.status}`);
+    console.log(`Response headers:`, Object.fromEntries([...response.headers.entries()]));
     
     if (!response.ok) {
       console.error(`API health check failed with status: ${response.status}`);
@@ -37,17 +52,16 @@ export const initDB = async (): Promise<boolean> => {
       return false;
     }
     
-    const responseData = await response.json();
-    console.log(`API health check response data:`, responseData);
-    
-    return true;
+    try {
+      const responseData = await safeParseResponse(response);
+      logResponse('GET', `${API_BASE_URL}/health`, response.status, responseData);
+      return true;
+    } catch (parseError) {
+      logError('GET', `${API_BASE_URL}/health`, parseError);
+      return false;
+    }
   } catch (error) {
-    console.error("Error connecting to API:", error);
-    console.error("Error details:", {
-      name: error.name,
-      message: error.message,
-      stack: error.stack
-    });
+    logError('GET', `${API_BASE_URL}/health`, error);
     return false;
   }
 };
