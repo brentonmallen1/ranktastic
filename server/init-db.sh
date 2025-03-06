@@ -56,5 +56,11 @@ else
     echo "Database already exists, skipping initialization."
 fi
 
+# Make sure server is configured to handle API routes properly
+# Let's also log the current environment to help with debugging
+echo "========== Environment Variables =========="
+env
+echo "=========================================="
+
 echo "Starting server with proper API route handling..."
 exec node index.js

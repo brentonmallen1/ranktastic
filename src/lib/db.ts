@@ -1,4 +1,3 @@
-
 import { useToast } from "@/hooks/use-toast";
 import { useEffect, useState } from "react";
 
@@ -30,9 +29,18 @@ export const initDB = async (): Promise<boolean> => {
   try {
     console.log(`Connecting to API at ${API_BASE_URL}`);
     // Test API connection
-    const response = await fetch(`${API_BASE_URL}/polls?limit=1`);
-    console.log(`API connection response:`, response);
-    return response.ok;
+    const response = await fetch(`${API_BASE_URL}/health`);
+    
+    console.log(`API health check response:`, response);
+    
+    if (!response.ok) {
+      console.error(`API health check failed with status: ${response.status}`);
+      const errorText = await response.text();
+      console.error(`Error response:`, errorText);
+      return false;
+    }
+    
+    return true;
   } catch (error) {
     console.error("Error connecting to API:", error);
     return false;
@@ -42,6 +50,9 @@ export const initDB = async (): Promise<boolean> => {
 // Poll CRUD operations
 export const createPoll = async (poll: Omit<Poll, "id" | "createdAt">): Promise<string> => {
   try {
+    console.log(`Creating poll with data:`, poll);
+    console.log(`Sending request to: ${API_BASE_URL}/polls`);
+    
     const response = await fetch(`${API_BASE_URL}/polls`, {
       method: "POST",
       headers: {
@@ -50,11 +61,16 @@ export const createPoll = async (poll: Omit<Poll, "id" | "createdAt">): Promise<
       body: JSON.stringify(poll),
     });
 
+    console.log(`Create poll response status:`, response.status);
+    
     if (!response.ok) {
-      throw new Error("Failed to create poll");
+      const errorText = await response.text();
+      console.error(`Error response:`, errorText);
+      throw new Error(`Failed to create poll: ${response.status} ${errorText}`);
     }
 
     const data = await response.json();
+    console.log(`Create poll success, received:`, data);
     return data.id;
   } catch (error) {
     console.error("Error creating poll:", error);
@@ -334,7 +350,7 @@ export const computeResults = async (pollId: string): Promise<{
   }
 };
 
-// Update the useDatabase hook to include initialized property
+// Update the useDatabase hook to include better error handling
 export const useDatabase = () => {
   const { toast } = useToast();
   const [initialized, setInitialized] = useState(false);
@@ -346,6 +362,19 @@ export const useDatabase = () => {
     try {
       setInitializing(true);
       console.log("Attempting to initialize database connection");
+      console.log(`API URL from env: ${import.meta.env.VITE_API_URL}`);
+      console.log(`Using API URL: ${API_BASE_URL}`);
+      
+      // First try a basic fetch to see if we can reach the API at all
+      try {
+        const basicResponse = await fetch(`${API_BASE_URL}/`);
+        console.log(`Basic API response:`, basicResponse);
+        const responseText = await basicResponse.text();
+        console.log(`Basic API response text:`, responseText.substring(0, 100) + "...");
+      } catch (err) {
+        console.error("Error with basic API fetch:", err);
+      }
+      
       const success = await initDB();
       console.log("Database initialization result:", success);
       setInitialized(success);
@@ -354,7 +383,7 @@ export const useDatabase = () => {
       if (!success) {
         toast({
           title: "API Connection Error",
-          description: "Failed to connect to the server API. Please make sure the backend server is running.",
+          description: "Failed to connect to the server API. Please try refreshing the page or check that the backend is running.",
           variant: "destructive",
         });
       }

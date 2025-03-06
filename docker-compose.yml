@@ -24,5 +24,6 @@ services:
       - ./server/data:/app/data
     environment:
       - PORT=3001
-      - CORS_ORIGIN=http://localhost:8080
+      - NODE_ENV=production
+      - CORS_ORIGIN=http://localhost:8080,http://frontend:80
     restart: unless-stopped
