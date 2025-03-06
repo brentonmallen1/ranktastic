@@ -22,4 +22,7 @@ services:
       - "3001:3001"
     volumes:
       - ./server/data:/app/data
+    environment:
+      - PORT=3001
+      - CORS_ORIGIN=http://localhost:8080
     restart: unless-stopped

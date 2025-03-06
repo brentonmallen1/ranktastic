@@ -56,5 +56,5 @@ else
     echo "Database already exists, skipping initialization."
 fi
 
-echo "Starting server..."
+echo "Starting server with proper API route handling..."
 exec node index.js
