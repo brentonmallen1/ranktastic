@@ -1,3 +1,4 @@
+
 import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
@@ -89,7 +90,7 @@ const PollPage = () => {
         <div className="container">
           <div className="flex items-center justify-between mb-6">
             <h1 className="text-3xl font-bold">{poll.title}</h1>
-            <SharePoll pollId={poll.id} />
+            <SharePoll pollId={poll.id} pollTitle={poll.title} />
           </div>
           
           {poll.description && (

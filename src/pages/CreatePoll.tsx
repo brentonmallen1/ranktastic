@@ -8,18 +8,23 @@ import SharePoll from "@/components/SharePoll";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useDatabase } from "@/lib/db";
 
+interface CreatedPollData {
+  id: string;
+  title: string;
+}
+
 const CreatePoll = () => {
   const { initialize } = useDatabase();
   const [showShareDialog, setShowShareDialog] = useState(false);
-  const [createdPollId, setCreatedPollId] = useState<string | null>(null);
+  const [createdPoll, setCreatedPoll] = useState<CreatedPollData | null>(null);
 
   // Initialize database on mount
   useEffect(() => {
     initialize();
   }, []);
 
-  const handlePollCreated = (pollId: string) => {
-    setCreatedPollId(pollId);
+  const handlePollCreated = (pollId: string, pollTitle: string) => {
+    setCreatedPoll({ id: pollId, title: pollTitle });
     setShowShareDialog(true);
   };
 
@@ -47,12 +52,12 @@ const CreatePoll = () => {
           <DialogHeader>
             <DialogTitle>Share Your New Poll</DialogTitle>
           </DialogHeader>
-          {createdPollId && (
+          {createdPoll && (
             <div className="py-4">
               <p className="text-muted-foreground mb-6">
                 Your poll has been created! Share it with others to start collecting votes.
               </p>
-              <SharePoll pollId={createdPollId} />
+              <SharePoll pollId={createdPoll.id} pollTitle={createdPoll.title} />
             </div>
           )}
         </DialogContent>
@@ -62,4 +67,3 @@ const CreatePoll = () => {
 };
 
 export default CreatePoll;
-
