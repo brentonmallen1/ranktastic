@@ -19,6 +19,11 @@ const CreatePoll = () => {
       
       <main className="flex-1 py-10">
         <div className="container">
+          <h1 className="text-3xl font-bold mb-6">Create a New Poll</h1>
+          <p className="text-muted-foreground mb-8">
+            Create a ranked-choice poll to gather opinions and make decisions. 
+            Add options, set an optional expiration date, and share with voters.
+          </p>
           <PollCreator />
         </div>
       </main>

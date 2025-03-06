@@ -1,69 +1,75 @@
-# Welcome to your Lovable project
 
-## Project info
+# RankChoice: Self-Hosted Ranked Choice Voting App
 
-**URL**: https://lovable.dev/projects/5dfea6b6-3f66-41f6-8372-8ec28f160419
+A simple, elegant ranked choice voting application that can be self-hosted using Docker.
 
-## How can I edit this code?
+## Features
 
-There are several ways of editing your application.
+- Create ranked choice polls with multiple options
+- Share polls via unique links
+- Vote by ranking options in order of preference
+- View detailed voting results and statistics
+- No login required - voters identify with name/email
+- Optional poll expiration
+- Self-hostable with Docker
 
-**Use Lovable**
+## Self-Hosting Instructions
 
-Simply visit the [Lovable Project](https://lovable.dev/projects/5dfea6b6-3f66-41f6-8372-8ec28f160419) and start prompting.
+### Using Docker Compose (Recommended)
 
-Changes made via Lovable will be committed automatically to this repo.
+1. Clone this repository:
+   ```
+   git clone https://github.com/yourusername/rankchoice.git
+   cd rankchoice
+   ```
 
-**Use your preferred IDE**
+2. Start the application:
+   ```
+   docker-compose up -d
+   ```
 
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
+3. Access the application at `http://localhost:8080`
 
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
+### Using Docker Directly
 
-Follow these steps:
+1. Clone this repository:
+   ```
+   git clone https://github.com/yourusername/rankchoice.git
+   cd rankchoice
+   ```
 
-```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
+2. Build the Docker image:
+   ```
+   docker build -t rankchoice .
+   ```
 
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
+3. Run the container:
+   ```
+   docker run -d -p 8080:80 --name rankchoice rankchoice
+   ```
 
-# Step 3: Install the necessary dependencies.
-npm i
+4. Access the application at `http://localhost:8080`
 
-# Step 4: Start the development server with auto-reloading and an instant preview.
-npm run dev
-```
+## Development Setup
 
-**Edit a file directly in GitHub**
+If you want to run the application locally for development:
 
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
+1. Install dependencies:
+   ```
+   npm install
+   ```
 
-**Use GitHub Codespaces**
+2. Start the development server:
+   ```
+   npm run dev
+   ```
 
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
+3. Access the application at `http://localhost:8080`
 
-## What technologies are used for this project?
+## Data Storage
 
-This project is built with .
+The application uses IndexedDB (client-side storage) wrapped to function similarly to SQLite. All poll data is stored in the browser. For self-hosted instances with multiple users, the polls created by each user will only be accessible on their own device.
 
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
+## License
 
-## How can I deploy this project?
-
-Simply open [Lovable](https://lovable.dev/projects/5dfea6b6-3f66-41f6-8372-8ec28f160419) and click on Share -> Publish.
-
-## I want to use a custom domain - is that possible?
-
-We don't support custom domains (yet). If you want to deploy your project under your own domain then we recommend using Netlify. Visit our docs for more details: [Custom domains](https://docs.lovable.dev/tips-tricks/custom-domain/)
+Open source under the MIT License.
