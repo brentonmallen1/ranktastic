@@ -1,8 +1,8 @@
 
-import { getPoll, getVotesForPoll } from "./index";
-import type { Poll } from "./types";
+import { getPoll, getVotesForPoll } from './index';
+import type { Poll } from './types';
 
-// Utility functions for computing results
+// Results computation
 export const computeResults = async (pollId: string): Promise<{
   rankings: Array<{ option: string; score: number }>;
   totalVotes: number;

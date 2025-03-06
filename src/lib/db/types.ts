@@ -1,6 +1,5 @@
 
 // Database schema types
-
 export interface Poll {
   id: string;
   title: string;

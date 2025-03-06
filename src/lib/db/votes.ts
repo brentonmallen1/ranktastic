@@ -1,82 +1,63 @@
 
-import { getDB } from "./init";
-import type { Vote } from "./types";
+import { API_BASE_URL } from './config';
+import type { Vote } from './types';
 
 // Vote CRUD operations
-export const submitVote = (vote: Omit<Vote, "id" | "createdAt">): Promise<string> => {
-  return new Promise((resolve, reject) => {
-    const db = getDB();
-    if (!db) {
-      reject(new Error("Database not initialized"));
-      return;
+export const submitVote = async (vote: Omit<Vote, "id" | "createdAt">): Promise<string> => {
+  try {
+    const response = await fetch(`${API_BASE_URL}/votes`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(vote),
+    });
+
+    if (!response.ok) {
+      throw new Error("Failed to submit vote");
     }
 
-    const transaction = db.transaction(["votes"], "readwrite");
-    const store = transaction.objectStore("votes");
-    const id = crypto.randomUUID();
+    const data = await response.json();
+    return data.id;
+  } catch (error) {
+    console.error("Error submitting vote:", error);
+    throw error;
+  }
+};
+
+export const getVotesForPoll = async (pollId: string): Promise<Vote[]> => {
+  try {
+    const response = await fetch(`${API_BASE_URL}/polls/${pollId}/votes`);
+
+    if (!response.ok) {
+      throw new Error("Failed to get votes");
+    }
+
+    const votes = await response.json();
     
-    const newVote = {
+    // Convert date strings to Date objects
+    return votes.map((vote: any) => ({
       ...vote,
-      id,
-      createdAt: new Date(),
-    };
-
-    const request = store.add(newVote);
-
-    request.onsuccess = () => {
-      resolve(id);
-    };
-
-    request.onerror = () => {
-      reject(new Error("Failed to submit vote"));
-    };
-  });
+      createdAt: new Date(vote.createdAt),
+    }));
+  } catch (error) {
+    console.error("Error getting votes:", error);
+    throw error;
+  }
 };
 
-export const getVotesForPoll = (pollId: string): Promise<Vote[]> => {
-  return new Promise((resolve, reject) => {
-    const db = getDB();
-    if (!db) {
-      reject(new Error("Database not initialized"));
-      return;
+export const hasVoted = async (pollId: string, voterEmail: string): Promise<boolean> => {
+  try {
+    const response = await fetch(`${API_BASE_URL}/polls/${pollId}/hasVoted?email=${encodeURIComponent(voterEmail)}`);
+
+    if (!response.ok) {
+      throw new Error("Failed to check if voter has voted");
     }
 
-    const transaction = db.transaction(["votes"], "readonly");
-    const store = transaction.objectStore("votes");
-    const index = store.index("pollId");
-    const request = index.getAll(pollId);
-
-    request.onsuccess = () => {
-      resolve(request.result || []);
-    };
-
-    request.onerror = () => {
-      reject(new Error("Failed to get votes"));
-    };
-  });
-};
-
-export const hasVoted = (pollId: string, voterEmail: string): Promise<boolean> => {
-  return new Promise((resolve, reject) => {
-    const db = getDB();
-    if (!db) {
-      reject(new Error("Database not initialized"));
-      return;
-    }
-
-    const transaction = db.transaction(["votes"], "readonly");
-    const store = transaction.objectStore("votes");
-    const index = store.index("pollId");
-    const request = index.getAll(pollId);
-
-    request.onsuccess = () => {
-      const votes = request.result as Vote[];
-      const hasVoted = votes.some(vote => vote.voterEmail === voterEmail);
-      resolve(hasVoted);
-    };
-
-    request.onerror = () => {
-      reject(new Error("Failed to check if voter has voted"));
-    };
-  });
+    const data = await response.json();
+    return data.hasVoted;
+  } catch (error) {
+    console.error("Error checking if voter has voted:", error);
+    throw error;
+  }
 };

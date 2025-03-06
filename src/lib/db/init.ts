@@ -1,48 +1,53 @@
 
-// Database initialization
+import { API_BASE_URL } from './config';
 
-const DB_NAME = "rankchoice_db";
-const DB_VERSION = 1;
-
-let db: IDBDatabase | null = null;
-
-// Initialize the database
-export const initDB = (): Promise<boolean> => {
-  return new Promise((resolve, reject) => {
-    const request = indexedDB.open(DB_NAME, DB_VERSION);
-
-    request.onerror = (event) => {
-      console.error("Error opening database:", event);
-      reject(false);
-    };
-
-    request.onsuccess = (event) => {
-      db = (event.target as IDBOpenDBRequest).result;
-      console.log("Database opened successfully");
-      resolve(true);
-    };
-
-    request.onupgradeneeded = (event) => {
-      const db = (event.target as IDBOpenDBRequest).result;
-
-      // Create polls store
-      if (!db.objectStoreNames.contains("polls")) {
-        const pollsStore = db.createObjectStore("polls", { keyPath: "id" });
-        pollsStore.createIndex("createdAt", "createdAt", { unique: false });
-        pollsStore.createIndex("isOpen", "isOpen", { unique: false });
+// Initialize DB is now a mock function for API compatibility
+export const initDB = async (): Promise<boolean> => {
+  try {
+    console.log(`Connecting to API at ${API_BASE_URL}`);
+    
+    // Test initial connection to base API endpoint
+    try {
+      const baseResponse = await fetch(`${API_BASE_URL}/`);
+      console.log(`Base API response status: ${baseResponse.status}`);
+      
+      if (baseResponse.ok) {
+        const baseData = await baseResponse.text();
+        console.log(`Base API response: ${baseData.substring(0, 100)}...`);
+      } else {
+        console.error(`Base API request failed with status: ${baseResponse.status}`);
       }
-
-      // Create votes store
-      if (!db.objectStoreNames.contains("votes")) {
-        const votesStore = db.createObjectStore("votes", { keyPath: "id" });
-        votesStore.createIndex("pollId", "pollId", { unique: false });
-        votesStore.createIndex("voterEmail", "voterEmail", { unique: false });
+    } catch (baseError) {
+      console.error("Error connecting to base API:", baseError);
+    }
+    
+    // Test API health check endpoint
+    const response = await fetch(`${API_BASE_URL}/health`);
+    
+    console.log(`API health check response status: ${response.status}`);
+    
+    if (!response.ok) {
+      console.error(`API health check failed with status: ${response.status}`);
+      try {
+        const errorText = await response.text();
+        console.error(`Error response body:`, errorText);
+      } catch (readError) {
+        console.error(`Could not read error response: ${readError}`);
       }
-    };
-  });
-};
-
-// Get database instance
-export const getDB = (): IDBDatabase | null => {
-  return db;
+      return false;
+    }
+    
+    const responseData = await response.json();
+    console.log(`API health check response data:`, responseData);
+    
+    return true;
+  } catch (error) {
+    console.error("Error connecting to API:", error);
+    console.error("Error details:", {
+      name: error.name,
+      message: error.message,
+      stack: error.stack
+    });
+    return false;
+  }
 };
