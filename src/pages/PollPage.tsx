@@ -18,7 +18,7 @@ const PollPage = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const { toast } = useToast();
-  const { initialized, initialize } = useDatabase();
+  const { initialized } = useDatabase();
   const [poll, setPoll] = useState<Poll | null>(null);
   const [votes, setVotes] = useState<Vote[]>([]);
   const [loading, setLoading] = useState(true);
@@ -27,15 +27,59 @@ const PollPage = () => {
   const [showVoterDetails, setShowVoterDetails] = useState(false);
   const isAdminUser = isAdmin();
 
+  // Only fetch poll data when the database is initialized and we have an ID
+  useEffect(() => {
+    let isMounted = true;
+    
+    const fetchPollData = async () => {
+      if (!id || !initialized) return;
+      
+      try {
+        setLoading(true);
+        
+        console.log("Fetching poll data for ID:", id);
+        const pollData = await getPoll(id);
+        
+        if (!isMounted) return;
+        
+        if (!pollData) {
+          setError("Poll not found");
+        } else {
+          setPoll(pollData);
+          
+          if (!pollData.isOpen) {
+            setShowResults(true);
+          }
+
+          // Fetch votes if admin
+          if (isAdminUser) {
+            const votesData = await getVotesForPoll(id);
+            if (isMounted) setVotes(votesData);
+          }
+        }
+      } catch (err) {
+        console.error("Error fetching poll:", err);
+        if (isMounted) setError("Failed to load the poll");
+      } finally {
+        if (isMounted) setLoading(false);
+      }
+    };
+
+    fetchPollData();
+    
+    return () => {
+      isMounted = false;
+    };
+  }, [id, initialized, isAdminUser]);
+
   const fetchPoll = async () => {
-    if (!id) {
-      setError("Invalid poll ID");
-      setLoading(false);
+    if (!id || !initialized) {
+      console.log("Cannot fetch poll: missing ID or DB not initialized", { id, initialized });
       return;
     }
 
     try {
-      setLoading(true);
+      console.log("Manually refreshing poll data for ID:", id);
       const pollData = await getPoll(id);
       
       if (!pollData) {
@@ -56,24 +100,8 @@ const PollPage = () => {
     } catch (err) {
       console.error("Error fetching poll:", err);
       setError("Failed to load the poll");
-    } finally {
-      setLoading(false);
     }
   };
-
-  useEffect(() => {
-    // Only attempt to fetch poll if initialized or after initializing
-    if (initialized) {
-      fetchPoll();
-    } else {
-      // Try to initialize the database first
-      initialize().then(success => {
-        if (success) {
-          fetchPoll();
-        }
-      });
-    }
-  }, [id, initialized, initialize]);
 
   const handleVoteSubmitted = () => {
     toast({
@@ -95,6 +123,7 @@ const PollPage = () => {
     setShowVoterDetails(!showVoterDetails);
   };
 
+  // Stable loading UI that won't flicker
   if (loading) {
     return (
       <div className="container max-w-4xl py-16 mx-auto">
