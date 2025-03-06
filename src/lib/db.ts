@@ -1,9 +1,8 @@
 import { useToast } from "@/hooks/use-toast";
 import { useEffect, useState } from "react";
 
-// SQLite is used through IndexedDB as a client-side storage solution
-const DB_NAME = "rankchoice_db";
-const DB_VERSION = 1;
+// API base URL - adjust as needed for production
+const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:3001/api";
 
 // Database schema
 interface Poll {
@@ -25,251 +24,189 @@ interface Vote {
   createdAt: Date;
 }
 
-let db: IDBDatabase | null = null;
-
-// Initialize the database
-export const initDB = (): Promise<boolean> => {
-  return new Promise((resolve, reject) => {
-    const request = indexedDB.open(DB_NAME, DB_VERSION);
-
-    request.onerror = (event) => {
-      console.error("Error opening database:", event);
-      reject(false);
-    };
-
-    request.onsuccess = (event) => {
-      db = (event.target as IDBOpenDBRequest).result;
-      console.log("Database opened successfully");
-      resolve(true);
-    };
-
-    request.onupgradeneeded = (event) => {
-      const db = (event.target as IDBOpenDBRequest).result;
-
-      // Create polls store
-      if (!db.objectStoreNames.contains("polls")) {
-        const pollsStore = db.createObjectStore("polls", { keyPath: "id" });
-        pollsStore.createIndex("createdAt", "createdAt", { unique: false });
-        pollsStore.createIndex("isOpen", "isOpen", { unique: false });
-      }
-
-      // Create votes store
-      if (!db.objectStoreNames.contains("votes")) {
-        const votesStore = db.createObjectStore("votes", { keyPath: "id" });
-        votesStore.createIndex("pollId", "pollId", { unique: false });
-        votesStore.createIndex("voterEmail", "voterEmail", { unique: false });
-      }
-    };
-  });
+// Initialize DB is now a mock function for API compatibility
+export const initDB = async (): Promise<boolean> => {
+  try {
+    // Test API connection
+    const response = await fetch(`${API_BASE_URL}/polls?limit=1`);
+    return response.ok;
+  } catch (error) {
+    console.error("Error connecting to API:", error);
+    return false;
+  }
 };
 
 // Poll CRUD operations
-export const createPoll = (poll: Omit<Poll, "id" | "createdAt">): Promise<string> => {
-  return new Promise((resolve, reject) => {
-    if (!db) {
-      reject(new Error("Database not initialized"));
-      return;
+export const createPoll = async (poll: Omit<Poll, "id" | "createdAt">): Promise<string> => {
+  try {
+    const response = await fetch(`${API_BASE_URL}/polls`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(poll),
+    });
+
+    if (!response.ok) {
+      throw new Error("Failed to create poll");
     }
 
-    const transaction = db.transaction(["polls"], "readwrite");
-    const store = transaction.objectStore("polls");
-    const id = crypto.randomUUID();
-    
-    const newPoll = {
-      ...poll,
-      id,
-      createdAt: new Date(),
-    };
-
-    const request = store.add(newPoll);
-
-    request.onsuccess = () => {
-      resolve(id);
-    };
-
-    request.onerror = () => {
-      reject(new Error("Failed to create poll"));
-    };
-  });
+    const data = await response.json();
+    return data.id;
+  } catch (error) {
+    console.error("Error creating poll:", error);
+    throw error;
+  }
 };
 
-export const getPoll = (id: string): Promise<Poll | null> => {
-  return new Promise((resolve, reject) => {
-    if (!db) {
-      reject(new Error("Database not initialized"));
-      return;
-    }
+export const getPoll = async (id: string): Promise<Poll | null> => {
+  try {
+    const response = await fetch(`${API_BASE_URL}/polls/${id}`);
 
-    const transaction = db.transaction(["polls"], "readonly");
-    const store = transaction.objectStore("polls");
-    const request = store.get(id);
-
-    request.onsuccess = () => {
-      resolve(request.result || null);
-    };
-
-    request.onerror = () => {
-      reject(new Error("Failed to get poll"));
-    };
-  });
-};
-
-export const updatePoll = (poll: Poll): Promise<boolean> => {
-  return new Promise((resolve, reject) => {
-    if (!db) {
-      reject(new Error("Database not initialized"));
-      return;
-    }
-
-    const transaction = db.transaction(["polls"], "readwrite");
-    const store = transaction.objectStore("polls");
-    const request = store.put(poll);
-
-    request.onsuccess = () => {
-      resolve(true);
-    };
-
-    request.onerror = () => {
-      reject(new Error("Failed to update poll"));
-    };
-  });
-};
-
-export const closePoll = (id: string): Promise<boolean> => {
-  return new Promise(async (resolve, reject) => {
-    try {
-      const poll = await getPoll(id);
-      if (!poll) {
-        reject(new Error("Poll not found"));
-        return;
+    if (!response.ok) {
+      if (response.status === 404) {
+        return null;
       }
-
-      poll.isOpen = false;
-      await updatePoll(poll);
-      resolve(true);
-    } catch (error) {
-      reject(error);
+      throw new Error("Failed to get poll");
     }
-  });
+
+    const poll = await response.json();
+    
+    // Convert date strings to Date objects
+    return {
+      ...poll,
+      createdAt: new Date(poll.createdAt),
+      expiresAt: poll.expiresAt ? new Date(poll.expiresAt) : null,
+    };
+  } catch (error) {
+    console.error("Error getting poll:", error);
+    throw error;
+  }
 };
 
-// Add the missing deletePoll function
-export const deletePoll = (id: string): Promise<boolean> => {
-  return new Promise((resolve, reject) => {
-    if (!db) {
-      reject(new Error("Database not initialized"));
-      return;
-    }
+export const updatePoll = async (poll: Poll): Promise<boolean> => {
+  try {
+    const response = await fetch(`${API_BASE_URL}/polls/${poll.id}`, {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(poll),
+    });
 
-    const transaction = db.transaction(["polls"], "readwrite");
-    const store = transaction.objectStore("polls");
-    const request = store.delete(id);
-
-    request.onsuccess = () => {
-      resolve(true);
-    };
-
-    request.onerror = () => {
-      reject(new Error("Failed to delete poll"));
-    };
-  });
+    return response.ok;
+  } catch (error) {
+    console.error("Error updating poll:", error);
+    throw error;
+  }
 };
 
-export const getAllPolls = (): Promise<Poll[]> => {
-  return new Promise((resolve, reject) => {
-    if (!db) {
-      reject(new Error("Database not initialized"));
-      return;
+export const closePoll = async (id: string): Promise<boolean> => {
+  try {
+    const response = await fetch(`${API_BASE_URL}/polls/${id}/close`, {
+      method: "PUT",
+    });
+
+    return response.ok;
+  } catch (error) {
+    console.error("Error closing poll:", error);
+    throw error;
+  }
+};
+
+export const deletePoll = async (id: string): Promise<boolean> => {
+  try {
+    const response = await fetch(`${API_BASE_URL}/polls/${id}`, {
+      method: "DELETE",
+    });
+
+    return response.ok;
+  } catch (error) {
+    console.error("Error deleting poll:", error);
+    throw error;
+  }
+};
+
+export const getAllPolls = async (): Promise<Poll[]> => {
+  try {
+    const response = await fetch(`${API_BASE_URL}/polls`);
+
+    if (!response.ok) {
+      throw new Error("Failed to get polls");
     }
 
-    const transaction = db.transaction(["polls"], "readonly");
-    const store = transaction.objectStore("polls");
-    const request = store.getAll();
-
-    request.onsuccess = () => {
-      resolve(request.result || []);
-    };
-
-    request.onerror = () => {
-      reject(new Error("Failed to get polls"));
-    };
-  });
+    const polls = await response.json();
+    
+    // Convert date strings to Date objects
+    return polls.map((poll: any) => ({
+      ...poll,
+      createdAt: new Date(poll.createdAt),
+      expiresAt: poll.expiresAt ? new Date(poll.expiresAt) : null,
+    }));
+  } catch (error) {
+    console.error("Error getting polls:", error);
+    throw error;
+  }
 };
 
 // Vote CRUD operations
-export const submitVote = (vote: Omit<Vote, "id" | "createdAt">): Promise<string> => {
-  return new Promise((resolve, reject) => {
-    if (!db) {
-      reject(new Error("Database not initialized"));
-      return;
+export const submitVote = async (vote: Omit<Vote, "id" | "createdAt">): Promise<string> => {
+  try {
+    const response = await fetch(`${API_BASE_URL}/votes`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(vote),
+    });
+
+    if (!response.ok) {
+      throw new Error("Failed to submit vote");
     }
 
-    const transaction = db.transaction(["votes"], "readwrite");
-    const store = transaction.objectStore("votes");
-    const id = crypto.randomUUID();
+    const data = await response.json();
+    return data.id;
+  } catch (error) {
+    console.error("Error submitting vote:", error);
+    throw error;
+  }
+};
+
+export const getVotesForPoll = async (pollId: string): Promise<Vote[]> => {
+  try {
+    const response = await fetch(`${API_BASE_URL}/polls/${pollId}/votes`);
+
+    if (!response.ok) {
+      throw new Error("Failed to get votes");
+    }
+
+    const votes = await response.json();
     
-    const newVote = {
+    // Convert date strings to Date objects
+    return votes.map((vote: any) => ({
       ...vote,
-      id,
-      createdAt: new Date(),
-    };
-
-    const request = store.add(newVote);
-
-    request.onsuccess = () => {
-      resolve(id);
-    };
-
-    request.onerror = () => {
-      reject(new Error("Failed to submit vote"));
-    };
-  });
+      createdAt: new Date(vote.createdAt),
+    }));
+  } catch (error) {
+    console.error("Error getting votes:", error);
+    throw error;
+  }
 };
 
-export const getVotesForPoll = (pollId: string): Promise<Vote[]> => {
-  return new Promise((resolve, reject) => {
-    if (!db) {
-      reject(new Error("Database not initialized"));
-      return;
+export const hasVoted = async (pollId: string, voterEmail: string): Promise<boolean> => {
+  try {
+    const response = await fetch(`${API_BASE_URL}/polls/${pollId}/hasVoted?email=${encodeURIComponent(voterEmail)}`);
+
+    if (!response.ok) {
+      throw new Error("Failed to check if voter has voted");
     }
 
-    const transaction = db.transaction(["votes"], "readonly");
-    const store = transaction.objectStore("votes");
-    const index = store.index("pollId");
-    const request = index.getAll(pollId);
-
-    request.onsuccess = () => {
-      resolve(request.result || []);
-    };
-
-    request.onerror = () => {
-      reject(new Error("Failed to get votes"));
-    };
-  });
-};
-
-export const hasVoted = (pollId: string, voterEmail: string): Promise<boolean> => {
-  return new Promise((resolve, reject) => {
-    if (!db) {
-      reject(new Error("Database not initialized"));
-      return;
-    }
-
-    const transaction = db.transaction(["votes"], "readonly");
-    const store = transaction.objectStore("votes");
-    const index = store.index("pollId");
-    const request = index.getAll(pollId);
-
-    request.onsuccess = () => {
-      const votes = request.result as Vote[];
-      const hasVoted = votes.some(vote => vote.voterEmail === voterEmail);
-      resolve(hasVoted);
-    };
-
-    request.onerror = () => {
-      reject(new Error("Failed to check if voter has voted"));
-    };
-  });
+    const data = await response.json();
+    return data.hasVoted;
+  } catch (error) {
+    console.error("Error checking if voter has voted:", error);
+    throw error;
+  }
 };
 
 // Utility functions
@@ -401,14 +338,14 @@ export const useDatabase = () => {
   
   const initialize = async () => {
     try {
-      await initDB();
-      setInitialized(true);
-      return true;
+      const success = await initDB();
+      setInitialized(success);
+      return success;
     } catch (error) {
-      console.error("Failed to initialize database:", error);
+      console.error("Failed to initialize database connection:", error);
       toast({
-        title: "Database Error",
-        description: "Failed to initialize local database. Some features may not work correctly.",
+        title: "API Connection Error",
+        description: "Failed to connect to the server API. Some features may not work correctly.",
         variant: "destructive",
       });
       return false;

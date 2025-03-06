@@ -12,6 +12,7 @@ A simple, elegant ranked choice voting application that can be self-hosted using
 - No login required - voters identify with name/email
 - Optional poll expiration
 - Self-hostable with Docker
+- **SQLite database storage** for persistent, shared data
 
 ## Self-Hosting Instructions
 
@@ -57,18 +58,34 @@ If you want to run the application locally for development:
 1. Install dependencies:
    ```
    npm install
+   cd server
+   npm install
+   cd ..
    ```
 
-2. Start the development server:
+2. Start the backend server:
+   ```
+   cd server
+   npm run dev
+   ```
+
+3. In a separate terminal, start the frontend development server:
    ```
    npm run dev
    ```
 
-3. Access the application at `http://localhost:8080`
+4. Access the application at the URL shown in your terminal (usually http://localhost:5173)
 
 ## Data Storage
 
-The application uses IndexedDB (client-side storage) wrapped to function similarly to SQLite. All poll data is stored in the browser. For self-hosted instances with multiple users, the polls created by each user will only be accessible on their own device.
+The application uses SQLite for data storage. All poll data is stored in a SQLite database file (`rankchoice.db`) located in the server's `data` directory. This provides:
+
+- Persistent storage between application restarts
+- Shared data access for all users
+- No external database dependencies
+- Simple backup and migration (just copy the .db file)
+
+For production environments, consider setting up regular backups of the database file.
 
 ## License
 

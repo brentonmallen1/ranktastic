@@ -2,15 +2,24 @@
 version: '3.8'
 
 services:
-  rank-choice-app:
+  frontend:
     build:
       context: .
       dockerfile: Dockerfile
     ports:
       - "8080:80"
-    volumes:
-      - ./data:/data
-    restart: unless-stopped
-    container_name: rank-choice-voting-app
     environment:
-      - NODE_ENV=production
+      - VITE_API_URL=http://backend:3001/api
+    depends_on:
+      - backend
+    restart: unless-stopped
+
+  backend:
+    build:
+      context: ./server
+      dockerfile: Dockerfile
+    ports:
+      - "3001:3001"
+    volumes:
+      - ./server/data:/app/data
+    restart: unless-stopped
