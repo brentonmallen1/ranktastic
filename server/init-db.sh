@@ -8,6 +8,7 @@ if [ ! -f "/app/data/database.db" ]; then
     node -e "
     const sqlite3 = require('sqlite3');
     const { open } = require('sqlite');
+    const path = require('path');
 
     async function initDb() {
         const db = await open({
@@ -56,3 +57,4 @@ else
 fi
 
 echo "Starting server..."
+exec node index.js
