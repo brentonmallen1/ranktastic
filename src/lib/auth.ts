@@ -50,6 +50,11 @@ export const isAuthenticated = (): boolean => {
   return localStorage.getItem("admin_authenticated") === "true";
 };
 
+// Adding the isAdmin function as an alias for isAuthenticated
+export const isAdmin = (): boolean => {
+  return isAuthenticated();
+};
+
 export const setAuthenticated = (value: boolean): void => {
   if (value) {
     localStorage.setItem("admin_authenticated", "true");
