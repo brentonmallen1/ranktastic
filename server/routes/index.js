@@ -8,20 +8,20 @@ let db;
 
 // Initialize SQLite DB connection
 const initDb = async () => {
-  try {
-    if (!db) {
+  if (!db) {
+    try {
       console.log('Opening SQLite database connection...');
       db = await open({
         filename: '/app/data/database.db',
         driver: sqlite3.Database
       });
       console.log('Connected to SQLite database successfully');
+    } catch (error) {
+      console.error('SQLite database connection error:', error);
+      throw new Error(`Database connection failed: ${error.message}`);
     }
-    return db;
-  } catch (error) {
-    console.error('SQLite database connection error:', error);
-    throw new Error(`Database connection failed: ${error.message}`);
   }
+  return db;
 };
 
 // Health check endpoint
