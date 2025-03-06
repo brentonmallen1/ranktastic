@@ -5,7 +5,7 @@ import { PlusCircle, Trash2, Clock, Save } from "lucide-react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import * as z from "zod";
-import { format } from "date-fns";
+import { format, set } from "date-fns";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -15,6 +15,7 @@ import { Separator } from "@/components/ui/separator";
 import { Switch } from "@/components/ui/switch";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
 import { createPoll } from "@/lib/db";
@@ -30,9 +31,23 @@ const formSchema = z.object({
     .min(2, { message: "You need at least 2 options" }),
   hasExpiration: z.boolean().default(false),
   expiresAt: z.date().optional().nullable(),
+  expirationHour: z.string().optional(),
+  expirationMinute: z.string().optional(),
 });
 
 type FormValues = z.infer<typeof formSchema>;
+
+// Generate hour options (0-23)
+const hourOptions = Array.from({ length: 24 }, (_, i) => ({
+  value: i.toString().padStart(2, '0'),
+  label: i.toString().padStart(2, '0')
+}));
+
+// Generate minute options (0, 15, 30, 45)
+const minuteOptions = [0, 15, 30, 45].map(min => ({
+  value: min.toString().padStart(2, '0'),
+  label: min.toString().padStart(2, '0')
+}));
 
 const PollCreator = ({ onPollCreated }: PollCreatorProps) => {
   const [isCreating, setIsCreating] = useState(false);
@@ -47,11 +62,14 @@ const PollCreator = ({ onPollCreated }: PollCreatorProps) => {
       options: ["", ""],
       hasExpiration: false,
       expiresAt: null,
+      expirationHour: "23",
+      expirationMinute: "59",
     },
   });
 
   const hasExpiration = form.watch("hasExpiration");
   const options = form.watch("options");
+  const expiresAt = form.watch("expiresAt");
 
   const onSubmit = async (values: FormValues) => {
     try {
@@ -59,11 +77,24 @@ const PollCreator = ({ onPollCreated }: PollCreatorProps) => {
       
       const cleanedOptions = values.options.filter(opt => opt.trim() !== "");
       
+      // Set the time on the expiration date if it exists
+      let expirationDate = values.expiresAt;
+      if (values.hasExpiration && expirationDate) {
+        const hour = parseInt(values.expirationHour || "23");
+        const minute = parseInt(values.expirationMinute || "59");
+        
+        expirationDate = set(expirationDate, {
+          hours: hour,
+          minutes: minute,
+          seconds: 59,
+        });
+      }
+      
       const pollId = await createPoll({
         title: values.title,
         description: values.description || "",
         options: cleanedOptions,
-        expiresAt: values.hasExpiration ? values.expiresAt : null,
+        expiresAt: values.hasExpiration ? expirationDate : null,
         isOpen: true,
       });
       
@@ -270,45 +301,114 @@ const PollCreator = ({ onPollCreated }: PollCreatorProps) => {
               />
               
               {hasExpiration && (
-                <FormField
-                  control={form.control}
-                  name="expiresAt"
-                  render={({ field }) => (
-                    <FormItem className="flex flex-col">
-                      <FormLabel>Expiration Date</FormLabel>
-                      <Popover>
-                        <PopoverTrigger asChild>
-                          <FormControl>
-                            <Button
-                              variant={"outline"}
-                              className={cn(
-                                "w-full pl-3 text-left font-normal",
-                                !field.value && "text-muted-foreground"
-                              )}
+                <>
+                  <div className="grid gap-4">
+                    <FormField
+                      control={form.control}
+                      name="expiresAt"
+                      render={({ field }) => (
+                        <FormItem className="flex flex-col">
+                          <FormLabel>Expiration Date</FormLabel>
+                          <Popover>
+                            <PopoverTrigger asChild>
+                              <FormControl>
+                                <Button
+                                  variant={"outline"}
+                                  className={cn(
+                                    "w-full pl-3 text-left font-normal",
+                                    !field.value && "text-muted-foreground"
+                                  )}
+                                >
+                                  {field.value ? (
+                                    format(field.value, "PPP")
+                                  ) : (
+                                    <span>Pick a date</span>
+                                  )}
+                                  <Calendar className="ml-auto h-4 w-4 opacity-50" />
+                                </Button>
+                              </FormControl>
+                            </PopoverTrigger>
+                            <PopoverContent className="w-auto p-0 pointer-events-auto" align="start">
+                              <Calendar
+                                mode="single"
+                                selected={field.value || undefined}
+                                onSelect={field.onChange}
+                                initialFocus
+                                disabled={(date) => date < new Date()}
+                                className="p-3 pointer-events-auto"
+                              />
+                            </PopoverContent>
+                          </Popover>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    
+                    <div className="flex flex-row gap-4">
+                      <FormField
+                        control={form.control}
+                        name="expirationHour"
+                        render={({ field }) => (
+                          <FormItem className="flex-1">
+                            <FormLabel>Hour</FormLabel>
+                            <Select
+                              onValueChange={field.onChange}
+                              defaultValue={field.value}
                             >
-                              {field.value ? (
-                                format(field.value, "PPP")
-                              ) : (
-                                <span>Pick a date</span>
-                              )}
-                              <Clock className="ml-auto h-4 w-4 opacity-50" />
-                            </Button>
-                          </FormControl>
-                        </PopoverTrigger>
-                        <PopoverContent className="w-auto p-0" align="start">
-                          <Calendar
-                            mode="single"
-                            selected={field.value || undefined}
-                            onSelect={field.onChange}
-                            initialFocus
-                            disabled={(date) => date < new Date()}
-                          />
-                        </PopoverContent>
-                      </Popover>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
+                              <FormControl>
+                                <SelectTrigger>
+                                  <SelectValue placeholder="Hour" />
+                                </SelectTrigger>
+                              </FormControl>
+                              <SelectContent>
+                                {hourOptions.map(option => (
+                                  <SelectItem key={option.value} value={option.value}>
+                                    {option.label}
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      
+                      <FormField
+                        control={form.control}
+                        name="expirationMinute"
+                        render={({ field }) => (
+                          <FormItem className="flex-1">
+                            <FormLabel>Minute</FormLabel>
+                            <Select
+                              onValueChange={field.onChange}
+                              defaultValue={field.value}
+                            >
+                              <FormControl>
+                                <SelectTrigger>
+                                  <SelectValue placeholder="Minute" />
+                                </SelectTrigger>
+                              </FormControl>
+                              <SelectContent>
+                                {minuteOptions.map(option => (
+                                  <SelectItem key={option.value} value={option.value}>
+                                    {option.label}
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    </div>
+                    
+                    {expiresAt && (
+                      <div className="text-sm text-muted-foreground">
+                        Your poll will automatically close on {expiresAt ? format(expiresAt, "PPP") : ""} at {form.watch("expirationHour") || "23"}:{form.watch("expirationMinute") || "59"}
+                      </div>
+                    )}
+                  </div>
+                </>
               )}
               
               <CardFooter className="px-0 pb-0 pt-6">
