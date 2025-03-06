@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { PlusCircle, Trash2, Clock, Save } from "lucide-react";
@@ -19,7 +20,7 @@ import { useToast } from "@/hooks/use-toast";
 import { createPoll } from "@/lib/db";
 
 interface PollCreatorProps {
-  onPollCreated?: (pollId: string) => void;
+  onPollCreated?: (pollId: string, pollTitle: string) => void;
 }
 
 const formSchema = z.object({
@@ -71,7 +72,7 @@ const PollCreator = ({ onPollCreated }: PollCreatorProps) => {
         description: "Your poll has been created successfully!",
       });
       
-      onPollCreated?.(pollId);
+      onPollCreated?.(pollId, values.title);
       
       navigate(`/poll/${pollId}`);
     } catch (error) {
