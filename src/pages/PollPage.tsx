@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
@@ -6,6 +5,7 @@ import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import VotingForm from "@/components/VotingForm";
 import PollResults from "@/components/PollResults";
+import SharePoll from "@/components/SharePoll";
 import { getPoll, useDatabase, type Poll } from "@/lib/db";
 
 const PollPage = () => {
@@ -87,13 +87,17 @@ const PollPage = () => {
       <Navbar />
       <main className="flex-1 py-10">
         <div className="container">
-          <h1 className="text-3xl font-bold mb-6">{poll.title}</h1>
+          <div className="flex items-center justify-between mb-6">
+            <h1 className="text-3xl font-bold">{poll.title}</h1>
+            <SharePoll pollId={poll.id} />
+          </div>
+          
           {poll.description && (
             <p className="text-muted-foreground mb-8">{poll.description}</p>
           )}
           
           {poll.isOpen ? (
-            <VotingForm poll={poll} onVoteSubmitted={() => setPoll({...poll, isOpen: false})} />
+            <VotingForm poll={poll} onVoteSubmitted={() => {}} />
           ) : (
             <PollResults pollId={poll.id} />
           )}

@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { PlusCircle, Trash2, Clock, Save } from "lucide-react";
@@ -19,7 +18,10 @@ import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
 import { createPoll } from "@/lib/db";
 
-// Schema for form validation
+interface PollCreatorProps {
+  onPollCreated?: (pollId: string) => void;
+}
+
 const formSchema = z.object({
   title: z.string().min(3, { message: "Poll title must be at least 3 characters" }),
   description: z.string().optional(),
@@ -31,12 +33,11 @@ const formSchema = z.object({
 
 type FormValues = z.infer<typeof formSchema>;
 
-const PollCreator = () => {
+const PollCreator = ({ onPollCreated }: PollCreatorProps) => {
   const [isCreating, setIsCreating] = useState(false);
   const { toast } = useToast();
   const navigate = useNavigate();
 
-  // Form with default values
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -48,19 +49,15 @@ const PollCreator = () => {
     },
   });
 
-  // Watch form values for conditional rendering
   const hasExpiration = form.watch("hasExpiration");
   const options = form.watch("options");
 
-  // Handle form submission
   const onSubmit = async (values: FormValues) => {
     try {
       setIsCreating(true);
       
-      // Remove any empty options (shouldn't happen due to validation, but just in case)
       const cleanedOptions = values.options.filter(opt => opt.trim() !== "");
       
-      // Create the poll
       const pollId = await createPoll({
         title: values.title,
         description: values.description || "",
@@ -69,13 +66,13 @@ const PollCreator = () => {
         isOpen: true,
       });
       
-      // Show success message
       toast({
         title: "Poll Created",
         description: "Your poll has been created successfully!",
       });
       
-      // Navigate to the poll
+      onPollCreated?.(pollId);
+      
       navigate(`/poll/${pollId}`);
     } catch (error) {
       console.error("Error creating poll:", error);
@@ -89,13 +86,11 @@ const PollCreator = () => {
     }
   };
 
-  // Add a new option to the list
   const addOption = () => {
     const currentOptions = form.getValues("options");
     form.setValue("options", [...currentOptions, ""]);
   };
 
-  // Remove an option from the list
   const removeOption = (index: number) => {
     const currentOptions = form.getValues("options");
     if (currentOptions.length <= 2) {
@@ -111,7 +106,6 @@ const PollCreator = () => {
     form.setValue("options", newOptions);
   };
 
-  // Handle bulk import of options from comma-separated text
   const handleBulkImport = (text: string) => {
     if (!text) return;
     
