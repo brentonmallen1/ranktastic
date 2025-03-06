@@ -1,7 +1,7 @@
 
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { getPoll, getVotesForPoll, useDatabase } from "@/lib/db";
+import { getPoll, getVotesForPoll, useDatabase, initDB } from "@/lib/db";
 import { useToast } from "@/hooks/use-toast";
 import VotingForm from "@/components/VotingForm";
 import PollResults from "@/components/PollResults";
@@ -19,6 +19,7 @@ const PollPage = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const { initialized } = useDatabase();
+  const [dbInitialized, setDbInitialized] = useState(false);
   const [poll, setPoll] = useState<Poll | null>(null);
   const [votes, setVotes] = useState<Vote[]>([]);
   const [loading, setLoading] = useState(true);
@@ -27,24 +28,55 @@ const PollPage = () => {
   const [showVoterDetails, setShowVoterDetails] = useState(false);
   const isAdminUser = isAdmin();
 
+  // Initialize database explicitly if needed
+  useEffect(() => {
+    const manuallyInitDB = async () => {
+      if (!initialized && !dbInitialized) {
+        console.log("PollPage: Database not initialized via hook, initializing manually");
+        try {
+          await initDB();
+          setDbInitialized(true);
+          console.log("PollPage: Manual database initialization successful");
+        } catch (err) {
+          console.error("PollPage: Failed to manually initialize database:", err);
+          setError("Failed to initialize database");
+          setLoading(false);
+        }
+      } else if (initialized) {
+        setDbInitialized(true);
+      }
+    };
+    
+    manuallyInitDB();
+  }, [initialized, dbInitialized]);
+
   // Only fetch poll data when the database is initialized and we have an ID
   useEffect(() => {
     let isMounted = true;
     
     const fetchPollData = async () => {
-      if (!id || !initialized) return;
+      if (!id || (!initialized && !dbInitialized)) {
+        console.log("PollPage: Cannot fetch poll data yet, waiting for DB initialization", {
+          id,
+          initialized,
+          dbInitialized
+        });
+        return;
+      }
       
       try {
+        console.log("PollPage: Fetching poll data for ID:", id);
         setLoading(true);
         
-        console.log("Fetching poll data for ID:", id);
         const pollData = await getPoll(id);
         
         if (!isMounted) return;
         
         if (!pollData) {
+          console.log("PollPage: Poll not found with ID:", id);
           setError("Poll not found");
         } else {
+          console.log("PollPage: Poll found:", pollData.title);
           setPoll(pollData);
           
           if (!pollData.isOpen) {
@@ -58,7 +90,7 @@ const PollPage = () => {
           }
         }
       } catch (err) {
-        console.error("Error fetching poll:", err);
+        console.error("PollPage: Error fetching poll:", err);
         if (isMounted) setError("Failed to load the poll");
       } finally {
         if (isMounted) setLoading(false);
@@ -70,21 +102,27 @@ const PollPage = () => {
     return () => {
       isMounted = false;
     };
-  }, [id, initialized, isAdminUser]);
+  }, [id, initialized, dbInitialized, isAdminUser]);
 
   const fetchPoll = async () => {
-    if (!id || !initialized) {
-      console.log("Cannot fetch poll: missing ID or DB not initialized", { id, initialized });
+    if (!id || (!initialized && !dbInitialized)) {
+      console.log("PollPage: Cannot fetch poll: missing ID or DB not initialized", { 
+        id, 
+        initialized,
+        dbInitialized
+      });
       return;
     }
 
     try {
-      console.log("Manually refreshing poll data for ID:", id);
+      console.log("PollPage: Manually refreshing poll data for ID:", id);
       const pollData = await getPoll(id);
       
       if (!pollData) {
         setError("Poll not found");
+        console.log("PollPage: Poll not found during manual refresh");
       } else {
+        console.log("PollPage: Poll refreshed successfully:", pollData.title);
         setPoll(pollData);
         
         if (!pollData.isOpen) {
@@ -98,7 +136,7 @@ const PollPage = () => {
         }
       }
     } catch (err) {
-      console.error("Error fetching poll:", err);
+      console.error("PollPage: Error fetching poll:", err);
       setError("Failed to load the poll");
     }
   };

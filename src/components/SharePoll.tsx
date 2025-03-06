@@ -17,9 +17,13 @@ const SharePoll = ({ pollId, pollTitle }: SharePollProps) => {
   const { toast } = useToast();
 
   useEffect(() => {
-    // Create the shareable URL
+    // Create the shareable URL - ensure we're using the correct format
     const baseUrl = window.location.origin;
-    setPollUrl(`${baseUrl}/poll/${pollId}`);
+    const pollPath = `/poll/${pollId}`;
+    setPollUrl(`${baseUrl}${pollPath}`);
+    
+    // Log for debugging
+    console.log("Share poll URL generated:", `${baseUrl}${pollPath}`);
   }, [pollId]);
 
   // Copy to clipboard
