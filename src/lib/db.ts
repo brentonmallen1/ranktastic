@@ -1,5 +1,5 @@
-
 import { useToast } from "@/hooks/use-toast";
+import { useEffect, useState } from "react";
 
 // SQLite is used through IndexedDB as a client-side storage solution
 const DB_NAME = "rankchoice_db";
@@ -150,6 +150,28 @@ export const closePoll = (id: string): Promise<boolean> => {
     } catch (error) {
       reject(error);
     }
+  });
+};
+
+// Add the missing deletePoll function
+export const deletePoll = (id: string): Promise<boolean> => {
+  return new Promise((resolve, reject) => {
+    if (!db) {
+      reject(new Error("Database not initialized"));
+      return;
+    }
+
+    const transaction = db.transaction(["polls"], "readwrite");
+    const store = transaction.objectStore("polls");
+    const request = store.delete(id);
+
+    request.onsuccess = () => {
+      resolve(true);
+    };
+
+    request.onerror = () => {
+      reject(new Error("Failed to delete poll"));
+    };
   });
 };
 
@@ -372,13 +394,15 @@ export const computeResults = async (pollId: string): Promise<{
   }
 };
 
-// Database initialization hook
+// Update the useDatabase hook to include initialized property
 export const useDatabase = () => {
   const { toast } = useToast();
+  const [initialized, setInitialized] = useState(false);
   
   const initialize = async () => {
     try {
       await initDB();
+      setInitialized(true);
       return true;
     } catch (error) {
       console.error("Failed to initialize database:", error);
@@ -391,7 +415,11 @@ export const useDatabase = () => {
     }
   };
 
-  return { initialize };
+  useEffect(() => {
+    initialize();
+  }, []);
+
+  return { initialize, initialized };
 };
 
 // Export types

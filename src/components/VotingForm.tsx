@@ -2,7 +2,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { DragDropContext, Droppable, Draggable, DropResult } from "@hello-pangea/dnd";
-import { ArrowUpDown, Check, ChevronDown, ChevronUp, GripVertical, Send } from "lucide-react";
+import { ArrowUpDown, Check, ChevronDown, ChevronUp, GripVertical } from "lucide-react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import * as z from "zod";
@@ -24,7 +24,7 @@ const formSchema = z.object({
 
 type FormValues = z.infer<typeof formSchema>;
 
-interface VotingFormProps {
+export interface VotingFormProps {
   poll: Poll;
   onVoteSubmitted: () => void;
 }

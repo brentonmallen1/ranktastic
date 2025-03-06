@@ -13,7 +13,14 @@ import AdminClosedPolls from "@/components/admin/AdminClosedPolls";
 const AdminDashboard = () => {
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState("open");
-  const { initialized } = useDatabase();
+  const { initialized, initialize } = useDatabase();
+
+  useEffect(() => {
+    // Initialize the database if not already initialized
+    if (!initialized) {
+      initialize();
+    }
+  }, [initialized, initialize]);
 
   const handleLogout = () => {
     logout();

@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { getPoll, useDatabase } from "@/lib/db";
@@ -23,7 +22,6 @@ const PollPage = () => {
   const [error, setError] = useState<string | null>(null);
   const [showResults, setShowResults] = useState(false);
 
-  // Fetch poll data
   const fetchPoll = async () => {
     if (!id) {
       setError("Invalid poll ID");
@@ -40,7 +38,6 @@ const PollPage = () => {
       } else {
         setPoll(pollData);
         
-        // Automatically show results for closed polls
         if (!pollData.isOpen) {
           setShowResults(true);
         }
@@ -110,7 +107,6 @@ const PollPage = () => {
         Back
       </Button>
       
-      {/* Admin Controls */}
       <AdminPollControls 
         pollId={poll.id} 
         isOpen={poll.isOpen} 
@@ -143,12 +139,10 @@ const PollPage = () => {
         </CardContent>
       </Card>
 
-      {/* Share Poll Component */}
       <div className="mb-6">
         <SharePoll pollId={poll.id} pollTitle={poll.title} />
       </div>
 
-      {/* Toggle between Voting and Results */}
       {poll.isOpen && (
         <div className="mb-6 flex justify-center">
           <Button 
@@ -160,13 +154,11 @@ const PollPage = () => {
         </div>
       )}
 
-      {/* Show either voting form or results */}
       {(showResults || !poll.isOpen) ? (
         <PollResults pollId={poll.id} />
       ) : (
         <VotingForm 
-          pollId={poll.id} 
-          options={poll.options} 
+          poll={poll} 
           onVoteSubmitted={handleVoteSubmitted} 
         />
       )}
