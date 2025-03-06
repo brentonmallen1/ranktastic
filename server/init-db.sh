@@ -57,7 +57,6 @@ else
 fi
 
 # Make sure server is configured to handle API routes properly
-# Let's also log the current environment to help with debugging
 echo "========== Environment Variables =========="
 env
 echo "=========================================="
