@@ -22,8 +22,8 @@ const AdminPollControls = ({ pollId, isOpen, onPollUpdated }: AdminPollControlsP
   const [isDeleting, setIsDeleting] = useState(false);
   const [isClosing, setIsClosing] = useState(false);
   
-  // Only render if user is authenticated as admin
-  if (!isAuthenticated()) {
+  // Only render if user is authenticated as admin and we have a valid pollId
+  if (!isAuthenticated() || !pollId) {
     return null;
   }
 
@@ -37,6 +37,7 @@ const AdminPollControls = ({ pollId, isOpen, onPollUpdated }: AdminPollControlsP
       });
       onPollUpdated();
     } catch (error) {
+      console.error("Error closing poll:", error);
       toast({
         title: "Error",
         description: "Failed to close the poll",
@@ -57,6 +58,7 @@ const AdminPollControls = ({ pollId, isOpen, onPollUpdated }: AdminPollControlsP
       });
       navigate("/admin");
     } catch (error) {
+      console.error("Error deleting poll:", error);
       toast({
         title: "Error",
         description: "Failed to delete the poll",

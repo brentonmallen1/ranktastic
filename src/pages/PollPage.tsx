@@ -62,10 +62,16 @@ const PollPage = () => {
   };
 
   useEffect(() => {
+    // Only attempt to fetch poll if initialized or after initializing
     if (initialized) {
       fetchPoll();
     } else {
-      initialize();
+      // Try to initialize the database first
+      initialize().then(success => {
+        if (success) {
+          fetchPoll();
+        }
+      });
     }
   }, [id, initialized, initialize]);
 
@@ -129,8 +135,8 @@ const PollPage = () => {
       </Button>
       
       <AdminPollControls 
-        pollId={poll.id} 
-        isOpen={poll.isOpen} 
+        pollId={poll?.id || ""} 
+        isOpen={poll?.isOpen || false} 
         onPollUpdated={fetchPoll}
       />
 
@@ -211,10 +217,10 @@ const PollPage = () => {
       )}
 
       <div className="mb-6">
-        <SharePoll pollId={poll.id} pollTitle={poll.title} />
+        <SharePoll pollId={poll?.id || ""} pollTitle={poll?.title || ""} />
       </div>
 
-      {poll.isOpen && (
+      {poll?.isOpen && (
         <div className="mb-6 flex justify-center">
           <Button 
             onClick={toggleResults}
@@ -225,11 +231,11 @@ const PollPage = () => {
         </div>
       )}
 
-      {(showResults || !poll.isOpen) ? (
-        <PollResults pollId={poll.id} />
+      {(showResults || !poll?.isOpen) ? (
+        <PollResults pollId={id || ""} />
       ) : (
         <VotingForm 
-          poll={poll} 
+          poll={poll as Poll} 
           onVoteSubmitted={handleVoteSubmitted} 
         />
       )}
