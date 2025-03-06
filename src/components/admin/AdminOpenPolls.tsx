@@ -1,10 +1,9 @@
-
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Calendar, Edit, Lock, Trash2, ExternalLink } from "lucide-react";
 
 import { useToast } from "@/hooks/use-toast";
-import { getAllPolls, closePoll, deletePoll } from "@/lib/db";
+import { getAllPolls, closePoll, deletePoll, useDatabase } from "@/lib/db";
 import type { Poll } from "@/lib/db";
 import { Button } from "@/components/ui/button";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from "@/components/ui/card";
@@ -14,6 +13,7 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 const AdminOpenPolls = () => {
   const { toast } = useToast();
   const navigate = useNavigate();
+  const { initialized, initialize } = useDatabase();
   const [polls, setPolls] = useState<Poll[]>([]);
   const [loading, setLoading] = useState(true);
   const [pollToDelete, setPollToDelete] = useState<string | null>(null);
@@ -38,8 +38,19 @@ const AdminOpenPolls = () => {
   };
 
   useEffect(() => {
-    fetchPolls();
-  }, []);
+    const loadPolls = async () => {
+      if (initialized) {
+        await fetchPolls();
+      } else {
+        const success = await initialize();
+        if (success) {
+          await fetchPolls();
+        }
+      }
+    };
+    
+    loadPolls();
+  }, [initialized, initialize]);
 
   const handleViewPoll = (pollId: string) => {
     navigate(`/poll/${pollId}`);

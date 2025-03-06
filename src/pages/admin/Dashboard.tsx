@@ -9,23 +9,51 @@ import { Button } from "@/components/ui/button";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import AdminOpenPolls from "@/components/admin/AdminOpenPolls";
 import AdminClosedPolls from "@/components/admin/AdminClosedPolls";
+import { useToast } from "@/hooks/use-toast";
 
 const AdminDashboard = () => {
   const navigate = useNavigate();
+  const { toast } = useToast();
   const [activeTab, setActiveTab] = useState("open");
   const { initialized, initialize } = useDatabase();
+  const [dbInitialized, setDbInitialized] = useState(false);
 
   useEffect(() => {
     // Initialize the database if not already initialized
-    if (!initialized) {
-      initialize();
-    }
-  }, [initialized, initialize]);
+    const initDb = async () => {
+      if (!initialized) {
+        const success = await initialize();
+        if (!success) {
+          toast({
+            title: "Database Error",
+            description: "Failed to initialize the database. Please refresh the page.",
+            variant: "destructive",
+          });
+        }
+        setDbInitialized(success);
+      } else {
+        setDbInitialized(true);
+      }
+    };
+    
+    initDb();
+  }, [initialized, initialize, toast]);
 
   const handleLogout = () => {
     logout();
     navigate("/admin/login");
   };
+
+  if (!dbInitialized) {
+    return (
+      <div className="container py-8 mx-auto">
+        <div className="text-center">
+          <h2 className="text-xl font-semibold mb-2">Initializing Database...</h2>
+          <p className="text-gray-500">Please wait while we set up your dashboard.</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="container py-8 mx-auto">
