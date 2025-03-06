@@ -1,5 +1,4 @@
-
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { LogOut, Settings, Home, RefreshCw } from "lucide-react";
 
@@ -15,27 +14,15 @@ const AdminDashboard = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const [activeTab, setActiveTab] = useState("open");
-  const { initialized, initialize, initializing } = useDatabase();
-  const [retryCount, setRetryCount] = useState(0);
+  const { initialized, retry, initializing, initializationError } = useDatabase();
+  const retryAttempted = useRef(false);
 
   useEffect(() => {
-    // Initialize the database if not already initialized
-    const initDb = async () => {
-      if (!initialized && !initializing) {
-        console.log("Attempting to initialize database, retry:", retryCount);
-        const success = await initialize();
-        if (!success) {
-          toast({
-            title: "Database Connection Error",
-            description: "Failed to connect to the database. Please check if the backend is running.",
-            variant: "destructive",
-          });
-        }
-      }
-    };
-    
-    initDb();
-  }, [initialized, initializing, retryCount, initialize, toast]);
+    if (!initialized && !initializing && !retryAttempted.current) {
+      retryAttempted.current = true;
+      retry();
+    }
+  }, [initialized, initializing]);
 
   const handleLogout = () => {
     logout();
@@ -43,7 +30,8 @@ const AdminDashboard = () => {
   };
 
   const handleRetry = () => {
-    setRetryCount(prev => prev + 1);
+    retryAttempted.current = false;
+    retry();
   };
 
   if (!initialized) {
@@ -59,6 +47,7 @@ const AdminDashboard = () => {
           ) : (
             <div className="flex flex-col items-center gap-4">
               <p className="text-red-500">Failed to connect to the database server.</p>
+              {initializationError && <p className="text-sm text-red-400">{initializationError}</p>}
               <Button onClick={handleRetry}>
                 <RefreshCw className="mr-2 h-4 w-4" />
                 Retry Connection

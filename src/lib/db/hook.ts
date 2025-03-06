@@ -1,10 +1,10 @@
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { initDB } from "./init";
 import { API_BASE_URL } from "./config";
 
-// Update the useDatabase hook to include better error handling
+// Update the useDatabase hook to include better error handling and prevent continuous API calls
 export const useDatabase = () => {
   const { toast } = useToast();
   const [initialized, setInitialized] = useState(false);
@@ -12,12 +12,15 @@ export const useDatabase = () => {
   const [initializationError, setInitializationError] = useState<string | null>(null);
   const [retries, setRetries] = useState(0);
   const MAX_RETRIES = 3;
+  const initAttempted = useRef(false);
   
   const initialize = async () => {
-    if (initializing) return false;
+    // Prevent multiple initialization attempts
+    if (initializing || initAttempted.current) return false;
     
     try {
       setInitializing(true);
+      initAttempted.current = true;
       setInitializationError(null);
       console.log("Attempting to initialize database connection");
       console.log(`API URL from env: ${import.meta.env.VITE_API_URL}`);
@@ -72,16 +75,16 @@ export const useDatabase = () => {
         if (retries < MAX_RETRIES) {
           setRetries(retries + 1);
           console.log(`Retrying API connection (${retries + 1}/${MAX_RETRIES})...`);
-          setTimeout(() => {
-            setInitializing(false);
-            initialize();
-          }, 3000); // Wait 3 seconds before retrying
+          
+          // Reset the initialization flag to allow a retry
+          setInitializing(false);
+          
+          return false;
         } else {
           console.error(`Max retries (${MAX_RETRIES}) reached. Giving up on API connection.`);
           setInitializing(false);
+          return false;
         }
-        
-        return false;
       }
     } catch (error) {
       const errorMsg = `Failed to connect to the server API: ${error.message}`;
@@ -100,8 +103,11 @@ export const useDatabase = () => {
     }
   };
 
+  // Only attempt initialization once on component mount
   useEffect(() => {
-    initialize();
+    if (!initAttempted.current) {
+      initialize();
+    }
   }, []);
 
   return { 
@@ -110,6 +116,7 @@ export const useDatabase = () => {
     initializing,
     initializationError,
     retry: () => {
+      initAttempted.current = false;
       setRetries(0);
       return initialize();
     }

@@ -1,5 +1,3 @@
-
-import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { BarChart3, PieChart, Vote } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -8,16 +6,9 @@ import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import HeroSection from "@/components/HeroSection";
 import HowItWorks from "@/components/HowItWorks";
-import { useDatabase } from "@/lib/db";
 
 const Index = () => {
-  const { initialize } = useDatabase();
   const navigate = useNavigate();
-
-  // Initialize database on mount
-  useEffect(() => {
-    initialize();
-  }, []);
 
   return (
     <div className="flex min-h-screen flex-col">
