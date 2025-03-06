@@ -9,7 +9,7 @@ services:
     ports:
       - "8080:80"
     environment:
-      - VITE_API_URL=http://backend:3001/api
+      - VITE_API_URL=/api
     depends_on:
       - backend
     restart: unless-stopped
