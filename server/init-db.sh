@@ -63,4 +63,4 @@ env
 echo "=========================================="
 
 echo "Starting server with proper API route handling..."
-exec node index.js
+exec node server.js

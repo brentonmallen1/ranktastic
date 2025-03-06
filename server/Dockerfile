@@ -21,4 +21,4 @@ RUN chmod +x /app/init-db.sh
 EXPOSE 3001
 
 # Run the initialization script and start the application
-CMD ["/bin/sh", "-c", "/app/init-db.sh && node index.js"]
+CMD ["/bin/sh", "-c", "/app/init-db.sh"]
