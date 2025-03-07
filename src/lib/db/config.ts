@@ -29,8 +29,10 @@ export const logError = (method: string, url: string, error: any) => {
   console.error('Error details:', errorInfo);
   
   // Check if it's an HTML response error (getting HTML instead of JSON)
-  if (error.message?.includes('<!DOCTYPE') || error.message?.includes('<html')) {
+  if (typeof error.message === 'string' && 
+      (error.message.includes('<!DOCTYPE') || error.message.includes('<html'))) {
     console.error('Received HTML instead of JSON. This typically means the API route is not found or is being handled incorrectly by the server.');
+    console.error('Check the Nginx configuration to ensure /api/* requests are being correctly forwarded to the backend server.');
   }
 };
 
@@ -51,21 +53,25 @@ export const safeParseResponse = async (response: Response) => {
   
   console.log(`Response text snippet (first 150 chars): ${text.substring(0, 150)}...`);
   
-  // If it's JSON, parse it
-  if (contentType?.includes('application/json') || (text.trim().startsWith('{') && text.trim().endsWith('}'))) {
+  // First check for HTML responses - this is a clear error case
+  if (text.includes('<!DOCTYPE html>') || text.includes('<html')) {
+    console.error('Received HTML instead of JSON. API endpoint is likely incorrect or not configured properly.');
+    console.error('This could be because the request is being routed to the frontend server instead of the backend API.');
+    console.error('Check your Nginx configuration to ensure /api requests are being correctly forwarded');
+    throw new Error('Received HTML instead of API JSON response. Server configuration issue.');
+  }
+  
+  // If it looks like JSON or is supposed to be JSON, parse it
+  if (contentType?.includes('application/json') || 
+      (text.trim().startsWith('{') && text.trim().endsWith('}')) ||
+      (text.trim().startsWith('[') && text.trim().endsWith(']'))) {
     try {
       return JSON.parse(text);
     } catch (err) {
       console.error('Error parsing JSON response:', err);
+      console.error('Raw response text:', text.substring(0, 500));
       throw new Error(`Invalid JSON response: ${text.substring(0, 100)}...`);
     }
-  }
-  
-  // Not JSON, handle appropriately
-  if (text.includes('<!DOCTYPE html>') || text.includes('<html')) {
-    console.error('Received HTML instead of JSON. API endpoint is likely incorrect or not configured properly.');
-    console.error('This could be because the request is being routed to the frontend server instead of the backend API.');
-    throw new Error('Received HTML instead of API JSON response. Server configuration issue.');
   }
   
   // For other response types, return the text

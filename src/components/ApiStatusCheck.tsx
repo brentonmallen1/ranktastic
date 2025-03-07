@@ -8,10 +8,12 @@ import { API_BASE_URL } from '@/lib/db/config';
 const ApiStatusCheck = () => {
   const [status, setStatus] = useState<'loading' | 'success' | 'error'>('loading');
   const [message, setMessage] = useState('Checking API connection...');
+  const [debugInfo, setDebugInfo] = useState<Record<string, any>>({});
   
   const checkApiStatus = async () => {
     setStatus('loading');
     setMessage('Checking API connection...');
+    setDebugInfo({});
     
     try {
       const healthEndpoint = `${API_BASE_URL}/health`;
@@ -19,7 +21,11 @@ const ApiStatusCheck = () => {
       
       const response = await fetch(healthEndpoint);
       console.log(`API health response status: ${response.status}`);
-      console.log(`Response headers:`, Object.fromEntries([...response.headers.entries()]));
+      
+      // Get all headers for debugging
+      const headers = Object.fromEntries([...response.headers.entries()]);
+      console.log(`Response headers:`, headers);
+      setDebugInfo(prev => ({ ...prev, headers }));
       
       // Check content-type and body
       const contentType = response.headers.get('content-type');
@@ -27,6 +33,7 @@ const ApiStatusCheck = () => {
       
       const text = await response.text();
       console.log(`Response body: ${text}`);
+      setDebugInfo(prev => ({ ...prev, body: text.substring(0, 100) + (text.length > 100 ? '...' : '') }));
       
       // Check if it's HTML (error case)
       if (text.includes('<!DOCTYPE html>') || text.includes('<html')) {
@@ -38,6 +45,7 @@ const ApiStatusCheck = () => {
         const data = JSON.parse(text);
         setStatus('success');
         setMessage(`API connected successfully! Response: ${JSON.stringify(data)}`);
+        setDebugInfo(prev => ({ ...prev, jsonData: data }));
       } catch (e) {
         // Non-JSON response
         setStatus('error');
@@ -47,6 +55,7 @@ const ApiStatusCheck = () => {
       console.error('API check error:', error);
       setStatus('error');
       setMessage(`API connection failed: ${error.message}`);
+      setDebugInfo(prev => ({ ...prev, error: error.message }));
     }
   };
   
@@ -79,7 +88,14 @@ const ApiStatusCheck = () => {
       
       <div className="text-xs text-muted-foreground">
         <p>API URL: {API_BASE_URL}</p>
-        <p>This tool helps diagnose API connection issues.</p>
+        <p>Request URL: {`${API_BASE_URL}/health`}</p>
+        
+        {Object.keys(debugInfo).length > 0 && (
+          <div className="mt-2 p-2 bg-gray-100 rounded overflow-auto max-h-40">
+            <p className="font-semibold">Debug Information:</p>
+            <pre>{JSON.stringify(debugInfo, null, 2)}</pre>
+          </div>
+        )}
       </div>
     </div>
   );
