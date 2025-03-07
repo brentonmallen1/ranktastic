@@ -77,8 +77,14 @@ const RankableOptions = ({ form, rankedOptions, setRankedOptions }: RankableOpti
                           <li
                             ref={provided.innerRef}
                             {...provided.draggableProps}
+                            style={{
+                              ...provided.draggableProps.style,
+                              // Explicitly set the element position and ensure it's visible during drag
+                              position: snapshot.isDragging ? 'absolute' : 'relative',
+                              zIndex: snapshot.isDragging ? 9999 : 'auto'
+                            }}
                             className={`flex items-center gap-2 p-3 rounded-md border transition-smooth group ${
-                              snapshot.isDragging ? "bg-accent/30 shadow-md" : "bg-background/50"
+                              snapshot.isDragging ? "bg-accent shadow-md" : "bg-background/50"
                             }`}
                           >
                             <div 
@@ -118,11 +124,6 @@ const RankableOptions = ({ form, rankedOptions, setRankedOptions }: RankableOpti
                                 <ChevronDown className="h-4 w-4" />
                               </Button>
                             </div>
-                            
-                            {/* Create a placeholder element for dragging that maintains dimensions */}
-                            {snapshot.isDragging && (
-                              <div className="fixed top-0 left-0 w-0 h-0 pointer-events-none" />
-                            )}
                           </li>
                         )}
                       </Draggable>
