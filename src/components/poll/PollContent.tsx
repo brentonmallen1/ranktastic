@@ -1,8 +1,7 @@
 
 import React, { useState } from "react";
-import { Button } from "@/components/ui/button";
-import VotingForm from "@/components/VotingForm";
-import PollResults from "@/components/PollResults";
+import PollActions from "./PollActions";
+import PollDisplay from "./PollDisplay";
 import type { Poll } from "@/lib/db";
 
 interface PollContentProps {
@@ -20,28 +19,21 @@ const PollContent = ({ poll, pollId, onVoteSubmitted }: PollContentProps) => {
 
   return (
     <>
-      {poll.isOpen && (
-        <div className="mb-6 flex justify-center">
-          <Button 
-            onClick={toggleResults}
-            variant="outline"
-          >
-            {showResults ? "Cast Vote" : "View Results"}
-          </Button>
-        </div>
-      )}
+      <PollActions 
+        isOpen={poll.isOpen}
+        showResults={showResults}
+        toggleResults={toggleResults}
+      />
 
-      {(showResults || !poll.isOpen) ? (
-        <PollResults pollId={pollId} />
-      ) : (
-        <VotingForm 
-          poll={poll} 
-          onVoteSubmitted={() => {
-            setShowResults(true);
-            onVoteSubmitted();
-          }} 
-        />
-      )}
+      <PollDisplay
+        poll={poll}
+        pollId={pollId}
+        showResults={showResults}
+        onVoteSubmitted={() => {
+          setShowResults(true);
+          onVoteSubmitted();
+        }}
+      />
     </>
   );
 };
