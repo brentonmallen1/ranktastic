@@ -56,28 +56,21 @@ else
     echo "Database already exists, skipping initialization."
 fi
 
-# Create health check endpoint to ensure API is properly set up
-echo "Adding health check endpoint..."
-cat > /app/health-check.js << 'EOF'
-// Simple health check endpoint
-const express = require('express');
-const router = express.Router();
-
-router.get('/health', (req, res) => {
-  res.json({ status: 'ok', timestamp: new Date().toISOString() });
-});
-
-module.exports = router;
-EOF
-
 # Print environment variables for debugging
 echo "========== Environment Variables =========="
 env
 echo "=========================================="
+
+# Verify directory structure
+echo "========== Directory Structure =========="
 ls -la /app
+echo "=========================================="
 
-# Make sure we have a routes directory
-mkdir -p /app/routes
+# Ensure we have direct access to data directory
+ls -la /app/data || mkdir -p /app/data
+echo "Data directory status: $?"
 
+# Start server directly - we're not using the server.js file anymore
+# but using index.js directly which has all the API routes
 echo "Starting server..."
-exec node /app/server.js
+exec node /app/index.js
