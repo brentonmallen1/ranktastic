@@ -95,9 +95,9 @@ export const updatePoll = async (poll: Poll): Promise<boolean> => {
   }
 };
 
-export const closePoll = async (id: string): Promise<boolean> => {
+export const closePoll = async (pollId: string): Promise<boolean> => {
   try {
-    const response = await fetch(`${API_BASE_URL}/polls/${id}/close`, {
+    const response = await fetch(`${API_BASE_URL}/polls/${pollId}/close`, {
       method: "PUT",
     });
 
@@ -160,6 +160,28 @@ export const getAllPolls = async (): Promise<Poll[]> => {
     }
   } catch (error) {
     logError('GET', `${API_BASE_URL}/polls`, error);
+    throw error;
+  }
+};
+
+export const clearPollVotes = async (pollId: string): Promise<boolean> => {
+  try {
+    const apiUrl = `${API_BASE_URL}/polls/${pollId}/votes`;
+    logRequest('DELETE', apiUrl);
+    
+    const response = await fetch(apiUrl, {
+      method: "DELETE",
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error(`Error response from ${apiUrl}:`, errorText);
+      throw new Error(`Failed to clear votes: ${response.status} ${errorText}`);
+    }
+
+    return true;
+  } catch (error) {
+    logError('DELETE', `${API_BASE_URL}/polls/${pollId}/votes`, error);
     throw error;
   }
 };
