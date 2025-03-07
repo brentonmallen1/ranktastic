@@ -28,8 +28,9 @@ const PollCard = ({
   const { toast } = useToast();
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
 
-  const handleViewResults = () => {
-    navigate(`/results/${poll.id}`);
+  const handleViewPoll = () => {
+    // Directly navigate to the poll page
+    navigate(`/poll/${poll.id}`);
   };
   
   const handleClosePoll = async () => {
@@ -122,11 +123,11 @@ const PollCard = ({
             size="sm"
             onClick={(e) => {
               e.stopPropagation(); // Prevent card click event from triggering
-              handleViewResults();
+              handleViewPoll();
             }}
           >
             <BarChart3 className="h-4 w-4 mr-2" />
-            Results
+            {poll.isOpen ? "View Poll" : "View Results"}
           </Button>
           
           <Button 
