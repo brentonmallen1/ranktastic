@@ -3,6 +3,16 @@
 // API base URL - using relative URL to respect host origin
 export const API_BASE_URL = import.meta.env.VITE_API_URL || "/api";
 
+// Base URL for sharing links - if VITE_BASE_URL is set, use it, otherwise fall back to window.location.origin
+export const getBaseUrl = () => {
+  const configuredBaseUrl = import.meta.env.VITE_BASE_URL;
+  if (configuredBaseUrl) {
+    // Remove trailing slash if present
+    return configuredBaseUrl.replace(/\/$/, '');
+  }
+  return window.location.origin;
+};
+
 // Debug helper for logging API requests
 export const logRequest = (method: string, url: string, body?: any) => {
   console.log(`API ${method} Request to: ${url}`);

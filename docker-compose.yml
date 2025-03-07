@@ -8,6 +8,7 @@ services:
       - "8080:80"
     environment:
       - VITE_API_URL=/api
+      - VITE_BASE_URL=${BASE_URL:-}
     depends_on:
       backend:
         condition: service_healthy
@@ -36,6 +37,7 @@ services:
       - CORS_ORIGIN=http://localhost:8080,http://frontend:80,http://frontend,*
       - DEBUG=express:*
       - LOG_LEVEL=debug
+      - BASE_URL=${BASE_URL:-}
     restart: on-failure
     networks:
       - app-network

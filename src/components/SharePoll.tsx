@@ -20,13 +20,18 @@ const SharePoll = ({ pollId, pollTitle, compact = false }: SharePollProps) => {
   const { toast } = useToast();
 
   useEffect(() => {
-    // Create the shareable URL - ensure we're using the correct format
-    const baseUrl = window.location.origin;
+    // Get the configured base URL from environment variables, if available
+    const baseUrl = import.meta.env.VITE_BASE_URL 
+      ? import.meta.env.VITE_BASE_URL.replace(/\/$/, '') // Remove trailing slash if present
+      : window.location.origin;
+    
+    // Create the shareable URL using the base URL
     const pollPath = `/poll/${pollId}`;
     setPollUrl(`${baseUrl}${pollPath}`);
     
     // Log for debugging
     console.log("Share poll URL generated:", `${baseUrl}${pollPath}`);
+    console.log("Using BASE_URL from env:", import.meta.env.VITE_BASE_URL || "Not set, using origin");
   }, [pollId]);
 
   // Copy to clipboard
