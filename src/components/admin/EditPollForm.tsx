@@ -82,11 +82,11 @@ const EditPollForm = ({ poll, isOpen, onClose, onPollUpdated }: EditPollFormProp
       setShowConfirmDialog(true);
     } else {
       // Proceed with update
-      processUpdate(values);
+      processUpdate(values, false);
     }
   };
 
-  const processUpdate = async (values: EditPollFormValues) => {
+  const processUpdate = async (values: EditPollFormValues, shouldClearVotes: boolean = false) => {
     setIsSubmitting(true);
 
     try {
@@ -102,13 +102,30 @@ const EditPollForm = ({ poll, isOpen, onClose, onPollUpdated }: EditPollFormProp
       const success = await updatePoll(updatedPoll);
 
       if (success) {
-        // If options changed, clear votes
-        if (optionsChanged) {
-          await clearPollVotes(poll.id);
-          toast({
-            title: "Poll updated",
-            description: "Poll updated successfully. All votes have been cleared because options were changed.",
-          });
+        // If options changed and we should clear votes, do that
+        if (shouldClearVotes) {
+          try {
+            const clearSuccess = await clearPollVotes(poll.id);
+            if (clearSuccess) {
+              toast({
+                title: "Poll updated",
+                description: "Poll updated successfully. All votes have been cleared because options were changed.",
+              });
+            } else {
+              toast({
+                title: "Warning",
+                description: "Poll updated but there was a problem clearing votes.",
+                variant: "destructive",
+              });
+            }
+          } catch (clearError) {
+            console.error("Error clearing poll votes:", clearError);
+            toast({
+              title: "Warning",
+              description: "Poll updated but there was an error clearing votes.",
+              variant: "destructive",
+            });
+          }
         } else {
           toast({
             title: "Poll updated",
@@ -139,7 +156,7 @@ const EditPollForm = ({ poll, isOpen, onClose, onPollUpdated }: EditPollFormProp
 
   const handleConfirmClearVotes = () => {
     if (pendingValues) {
-      processUpdate(pendingValues);
+      processUpdate(pendingValues, true);
     }
     setShowConfirmDialog(false);
   };

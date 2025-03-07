@@ -1,3 +1,4 @@
+
 import { API_BASE_URL, logRequest, logResponse, logError, safeParseResponse } from './config';
 import type { Poll } from './types';
 
@@ -167,21 +168,40 @@ export const getAllPolls = async (): Promise<Poll[]> => {
 export const clearPollVotes = async (pollId: string): Promise<boolean> => {
   try {
     const apiUrl = `${API_BASE_URL}/polls/${pollId}/votes`;
+    console.log(`Clearing votes for poll ${pollId}`);
     logRequest('DELETE', apiUrl);
     
     const response = await fetch(apiUrl, {
       method: "DELETE",
     });
 
+    console.log(`Clear votes response status:`, response.status);
+    console.log(`Response headers:`, Object.fromEntries([...response.headers.entries()]));
+
     if (!response.ok) {
       const errorText = await response.text();
       console.error(`Error response from ${apiUrl}:`, errorText);
-      throw new Error(`Failed to clear votes: ${response.status} ${errorText}`);
+      console.error(`Failed to clear votes: ${response.status} ${errorText}`);
+      return false;
     }
 
-    return true;
+    try {
+      // Try to parse response if there's any
+      if (response.headers.get('content-type')?.includes('application/json')) {
+        const data = await safeParseResponse(response);
+        logResponse('DELETE', apiUrl, response.status, data);
+      } else {
+        console.log(`Successfully cleared votes for poll ${pollId}`);
+      }
+      return true;
+    } catch (parseError) {
+      // Even if parsing fails, if the response was ok, we count it as success
+      console.warn(`Warning: Could not parse response when clearing votes, but operation may have succeeded:`, parseError);
+      return true;
+    }
   } catch (error) {
     logError('DELETE', `${API_BASE_URL}/polls/${pollId}/votes`, error);
-    throw error;
+    console.error(`Error clearing votes for poll ${pollId}:`, error);
+    return false;
   }
 };
