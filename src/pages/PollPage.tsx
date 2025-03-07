@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { getPoll, getVotesForPoll, useDatabase, initDB } from "@/lib/db";
@@ -28,7 +27,6 @@ const PollPage = () => {
   const [showVoterDetails, setShowVoterDetails] = useState(false);
   const isAdminUser = isAdmin();
 
-  // Initialize database explicitly if needed
   useEffect(() => {
     const manuallyInitDB = async () => {
       if (!initialized && !dbInitialized) {
@@ -50,7 +48,6 @@ const PollPage = () => {
     manuallyInitDB();
   }, [initialized, dbInitialized]);
 
-  // Only fetch poll data when the database is initialized and we have an ID
   useEffect(() => {
     let isMounted = true;
     
@@ -83,7 +80,6 @@ const PollPage = () => {
             setShowResults(true);
           }
 
-          // Fetch votes if admin
           if (isAdminUser) {
             const votesData = await getVotesForPoll(id);
             if (isMounted) setVotes(votesData);
@@ -129,7 +125,6 @@ const PollPage = () => {
           setShowResults(true);
         }
 
-        // Fetch votes if admin
         if (isAdminUser) {
           const votesData = await getVotesForPoll(id);
           setVotes(votesData);
@@ -147,7 +142,6 @@ const PollPage = () => {
       description: "Your vote has been recorded.",
     });
     setShowResults(true);
-    // Refresh votes if admin
     if (isAdminUser && id) {
       getVotesForPoll(id).then(setVotes);
     }
@@ -161,7 +155,6 @@ const PollPage = () => {
     setShowVoterDetails(!showVoterDetails);
   };
 
-  // Stable loading UI that won't flicker
   if (loading) {
     return (
       <div className="container max-w-4xl py-16 mx-auto">
@@ -192,14 +185,17 @@ const PollPage = () => {
 
   return (
     <div className="container max-w-4xl py-8 mx-auto">
-      <Button 
-        variant="ghost" 
-        className="mb-6" 
-        onClick={() => navigate(-1)}
-      >
-        <ArrowLeft className="mr-2 h-4 w-4" />
-        Back
-      </Button>
+      <div className="flex justify-between items-center mb-6">
+        <Button 
+          variant="ghost" 
+          onClick={() => navigate(-1)}
+        >
+          <ArrowLeft className="mr-2 h-4 w-4" />
+          Back
+        </Button>
+        
+        <SharePoll pollId={poll?.id || ""} pollTitle={poll?.title || ""} compact={true} />
+      </div>
       
       <AdminPollControls 
         pollId={poll?.id || ""} 
@@ -282,10 +278,6 @@ const PollPage = () => {
           </CardContent>
         </Card>
       )}
-
-      <div className="mb-6">
-        <SharePoll pollId={poll?.id || ""} pollTitle={poll?.title || ""} />
-      </div>
 
       {poll?.isOpen && (
         <div className="mb-6 flex justify-center">
