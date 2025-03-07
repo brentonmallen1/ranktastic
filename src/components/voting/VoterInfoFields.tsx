@@ -1,8 +1,8 @@
 
+import { UseFormReturn } from "react-hook-form";
 import { FormField, FormItem, FormLabel, FormControl, FormDescription, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import { UseFormReturn } from "react-hook-form";
-import { VotingFormValues } from "./VotingForm";
+import type { VotingFormValues } from "./VoterForm";
 
 interface VoterInfoFieldsProps {
   form: UseFormReturn<VotingFormValues>;

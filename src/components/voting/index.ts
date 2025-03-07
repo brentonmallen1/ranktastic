@@ -1,6 +1,4 @@
 
-export { default as VotingForm } from './VotingForm';
-export * from './VotingForm';
-export { default as RankingList } from './RankingList';
-export { default as VoterInfoFields } from './VoterInfoFields';
-export { default as ClosedPollMessage } from './ClosedPollMessage';
+export { default as VoterForm } from "./VoterForm";
+export { default as RankableOptions } from "./RankableOptions";
+export { default as ClosedPollState } from "./ClosedPollState";
