@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { PlusCircle, Trash2, Clock, Save } from "lucide-react";
@@ -328,14 +327,13 @@ const PollCreator = ({ onPollCreated }: PollCreatorProps) => {
                                 </Button>
                               </FormControl>
                             </PopoverTrigger>
-                            <PopoverContent className="w-auto p-0 pointer-events-auto" align="start">
+                            <PopoverContent className="w-auto p-0" align="start">
                               <Calendar
                                 mode="single"
                                 selected={field.value || undefined}
                                 onSelect={field.onChange}
                                 initialFocus
                                 disabled={(date) => date < new Date()}
-                                className="p-3 pointer-events-auto"
                               />
                             </PopoverContent>
                           </Popover>
