@@ -73,11 +73,13 @@ const RankableOptions = ({ form, rankedOptions, setRankedOptions }: RankableOpti
                   >
                     {rankedOptions.map((option, index) => (
                       <Draggable key={option} draggableId={option} index={index}>
-                        {(provided) => (
+                        {(provided, snapshot) => (
                           <li
                             ref={provided.innerRef}
                             {...provided.draggableProps}
-                            className="flex items-center gap-2 p-3 bg-background/50 rounded-md border transition-smooth group"
+                            className={`flex items-center gap-2 p-3 rounded-md border transition-smooth group ${
+                              snapshot.isDragging ? "bg-accent/30 shadow-md" : "bg-background/50"
+                            }`}
                           >
                             <div 
                               {...provided.dragHandleProps}
