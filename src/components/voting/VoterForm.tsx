@@ -12,9 +12,9 @@ import { Separator } from "@/components/ui/separator";
 import { useToast } from "@/hooks/use-toast";
 import { hasVoted, submitVote } from "@/lib/db";
 import type { Poll } from "@/lib/db";
-import { VoterInfoFields } from "./VoterInfoFields";
-import { RankableOptions } from "./";
-import { ClosedPollState } from "./";
+import VoterInfoFields from "./VoterInfoFields";
+import RankableOptions from "./RankableOptions";
+import ClosedPollState from "./ClosedPollState";
 
 // Schema for form validation
 const formSchema = z.object({
