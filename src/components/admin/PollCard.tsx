@@ -44,13 +44,15 @@ const PollCard = ({
   };
 
   // Function to open the edit dialog
-  const handleEditPoll = () => {
+  const handleEditPoll = (e: React.MouseEvent) => {
+    e.stopPropagation(); // Prevent card click event from triggering
     console.log("Opening edit dialog for poll:", poll.id);
     setIsEditDialogOpen(true);
   };
 
   // Function to copy the share link to clipboard
-  const handleCopyShareLink = async () => {
+  const handleCopyShareLink = async (e: React.MouseEvent) => {
+    e.stopPropagation(); // Prevent card click event from triggering
     try {
       const baseUrl = getBaseUrl();
       const shareUrl = `${baseUrl}/poll/${poll.id}`;
@@ -70,9 +72,16 @@ const PollCard = ({
     }
   };
 
+  const handleCardClick = () => {
+    navigate(`/poll/${poll.id}`);
+  };
+
   return (
     <>
-      <Card className="h-full flex flex-col">
+      <Card 
+        className="h-full flex flex-col cursor-pointer hover:border-primary/50 transition-all duration-200"
+        onClick={handleCardClick}
+      >
         <CardHeader>
           <div className="flex justify-between items-start">
             <CardTitle className="text-xl flex-1 mr-2">{poll.title}</CardTitle>
@@ -80,6 +89,7 @@ const PollCard = ({
               {poll.isOpen ? "Open" : "Closed"}
             </Badge>
           </div>
+          <p className="text-xs text-muted-foreground mt-1">ID: {poll.id}</p>
         </CardHeader>
         <CardContent className="flex-1">
           <p className="text-muted-foreground mb-4">
@@ -110,7 +120,10 @@ const PollCard = ({
           <Button 
             variant="outline" 
             size="sm"
-            onClick={handleViewResults}
+            onClick={(e) => {
+              e.stopPropagation(); // Prevent card click event from triggering
+              handleViewResults();
+            }}
           >
             <BarChart3 className="h-4 w-4 mr-2" />
             Results
@@ -138,7 +151,10 @@ const PollCard = ({
             <Button 
               variant="outline" 
               size="sm"
-              onClick={handleClosePoll}
+              onClick={(e) => {
+                e.stopPropagation(); // Prevent card click event from triggering
+                handleClosePoll();
+              }}
             >
               <Lock className="h-4 w-4 mr-2" />
               Close
