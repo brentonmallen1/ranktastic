@@ -58,7 +58,6 @@ fi
 
 # Create health check endpoint to ensure API is properly set up
 echo "Adding health check endpoint..."
-mkdir -p /app/routes
 cat > /app/health-check.js << 'EOF'
 // Simple health check endpoint
 const express = require('express');
@@ -75,6 +74,10 @@ EOF
 echo "========== Environment Variables =========="
 env
 echo "=========================================="
+ls -la /app
+
+# Make sure we have a routes directory
+mkdir -p /app/routes
 
 echo "Starting server..."
 exec node /app/server.js

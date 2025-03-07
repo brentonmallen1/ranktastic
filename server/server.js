@@ -3,6 +3,7 @@ const express = require('express');
 const cors = require('cors');
 const fs = require('fs');
 const path = require('path');
+const healthCheck = require('./health-check');
 
 // Create Express app
 const app = express();
@@ -44,6 +45,9 @@ const corsOptions = {
 
 app.use(cors(corsOptions));
 
+// Health check endpoint - register before other routes
+app.use('/', healthCheck);
+
 // Verify routes directory exists before attempting to load routes
 const routesPath = path.join(__dirname, 'routes');
 console.log(`Checking for routes directory at: ${routesPath}`);
@@ -66,7 +70,7 @@ if (fs.existsSync(routesPath)) {
   process.exit(1);
 }
 
-// Root health check endpoint
+// Root endpoint
 app.get('/', (req, res) => {
   res.json({ status: 'ok', message: 'RankChoice API is running' });
 });
