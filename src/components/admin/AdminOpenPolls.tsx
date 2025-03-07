@@ -42,8 +42,10 @@ const AdminOpenPolls = () => {
     }
   }, [initialized]);
 
-  const handleClosePoll = async (pollId: string) => {
-    return await closePoll(pollId);
+  const handleClosePoll = async (pollId: string): Promise<void> => {
+    // Modify the function to return Promise<void> instead of Promise<boolean>
+    await closePoll(pollId);
+    // The boolean return value is no longer passed on
   };
 
   if (loading) {
