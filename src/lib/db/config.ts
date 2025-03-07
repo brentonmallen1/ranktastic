@@ -42,7 +42,7 @@ export const logError = (method: string, url: string, error: any) => {
   if (typeof error.message === 'string' && 
       (error.message.includes('<!DOCTYPE') || error.message.includes('<html'))) {
     console.error('Received HTML instead of JSON. This typically means the API route is not found or is being handled incorrectly by the server.');
-    console.error('Check the Nginx configuration to ensure /api/* requests are being correctly forwarded to the backend server.');
+    console.error('Check that VITE_API_URL in your .env file is set correctly. If running locally, make sure your backend server is running.');
   }
 };
 
@@ -67,7 +67,7 @@ export const safeParseResponse = async (response: Response) => {
   if (text.includes('<!DOCTYPE html>') || text.includes('<html')) {
     console.error('Received HTML instead of JSON. API endpoint is likely incorrect or not configured properly.');
     console.error('This could be because the request is being routed to the frontend server instead of the backend API.');
-    console.error('Check your Nginx configuration to ensure /api requests are being correctly forwarded');
+    console.error('Check that VITE_API_URL in your .env file is set correctly. If running locally, make sure your backend server is running.');
     throw new Error('Received HTML instead of API JSON response. Server configuration issue.');
   }
   

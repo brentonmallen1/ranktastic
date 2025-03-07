@@ -4,10 +4,12 @@ import { useNavigate } from "react-router-dom";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Calendar, BarChart3, Edit, Lock, Trash2 } from "lucide-react";
+import { Calendar, BarChart3, Edit, Lock, Share2 } from "lucide-react";
 import { format } from "date-fns";
 import type { Poll } from "@/lib/db";
 import EditPollForm from "./EditPollForm";
+import { useToast } from "@/hooks/use-toast";
+import { getBaseUrl } from "@/lib/db/config";
 
 interface PollCardProps {
   poll: Poll;
@@ -23,6 +25,7 @@ const PollCard = ({
   onClosePoll,
 }: PollCardProps) => {
   const navigate = useNavigate();
+  const { toast } = useToast();
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
 
   const handleViewResults = () => {
@@ -44,6 +47,27 @@ const PollCard = ({
   const handleEditPoll = () => {
     console.log("Opening edit dialog for poll:", poll.id);
     setIsEditDialogOpen(true);
+  };
+
+  // Function to copy the share link to clipboard
+  const handleCopyShareLink = async () => {
+    try {
+      const baseUrl = getBaseUrl();
+      const shareUrl = `${baseUrl}/poll/${poll.id}`;
+      await navigator.clipboard.writeText(shareUrl);
+      
+      toast({
+        title: "Link Copied",
+        description: "Poll link has been copied to clipboard",
+      });
+    } catch (error) {
+      console.error("Failed to copy link:", error);
+      toast({
+        title: "Failed to Copy",
+        description: "Could not copy link to clipboard",
+        variant: "destructive",
+      });
+    }
   };
 
   return (
@@ -99,6 +123,15 @@ const PollCard = ({
           >
             <Edit className="h-4 w-4 mr-2" />
             Edit
+          </Button>
+          
+          <Button 
+            variant="outline" 
+            size="sm"
+            onClick={handleCopyShareLink}
+          >
+            <Share2 className="h-4 w-4 mr-2" />
+            Share
           </Button>
           
           {showCloseButton && poll.isOpen && (
