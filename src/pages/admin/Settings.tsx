@@ -4,15 +4,16 @@ import { useNavigate } from "react-router-dom";
 import { z } from "zod";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Save, LogOut, KeyRound, User, Settings as SettingsIcon, ArrowLeft } from "lucide-react";
+import { Save, LogOut, KeyRound, User, Settings as SettingsIcon, ArrowLeft, UserPlus } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from "@/components/ui/card";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import { Switch } from "@/components/ui/switch";
 import { useToast } from "@/hooks/use-toast";
-import { logout, updateCredentials, getAdminUsername } from "@/lib/auth";
+import { logout, updateCredentials, getAdminUsername, getSettings, updateSettings } from "@/lib/auth";
 
 const credentialsSchema = z.object({
   username: z.string().min(3, "Username must be at least 3 characters"),
@@ -24,12 +25,20 @@ const credentialsSchema = z.object({
   path: ["confirmPassword"],
 });
 
+const settingsSchema = z.object({
+  allowPublicPolls: z.boolean(),
+});
+
 const AdminSettings = () => {
   const { toast } = useToast();
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState("account");
   const [username, setUsername] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [isSavingSettings, setIsSavingSettings] = useState(false);
+  
+  // Get settings from localStorage
+  const [settings, setSettings] = useState(getSettings());
 
   useEffect(() => {
     // Load current admin username
@@ -44,6 +53,13 @@ const AdminSettings = () => {
       currentPassword: "",
       newPassword: "",
       confirmPassword: "",
+    },
+  });
+
+  const settingsForm = useForm<z.infer<typeof settingsSchema>>({
+    resolver: zodResolver(settingsSchema),
+    defaultValues: {
+      allowPublicPolls: settings.allowPublicPolls,
     },
   });
 
@@ -84,6 +100,31 @@ const AdminSettings = () => {
       });
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const onSaveSettings = async (values: z.infer<typeof settingsSchema>) => {
+    setIsSavingSettings(true);
+    
+    try {
+      updateSettings({
+        allowPublicPolls: values.allowPublicPolls,
+      });
+      
+      setSettings(getSettings());
+      
+      toast({
+        title: "Settings updated",
+        description: "Application settings have been updated successfully",
+      });
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "An unexpected error occurred while saving settings",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSavingSettings(false);
     }
   };
 
@@ -209,11 +250,38 @@ const AdminSettings = () => {
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="p-4 text-center">
-                <p className="text-muted-foreground">
-                  Additional configuration options will be available in future updates.
-                </p>
-              </div>
+              <Form {...settingsForm}>
+                <form onSubmit={settingsForm.handleSubmit(onSaveSettings)} className="space-y-4">
+                  <FormField
+                    control={settingsForm.control}
+                    name="allowPublicPolls"
+                    render={({ field }) => (
+                      <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
+                        <div className="space-y-0.5">
+                          <div className="flex items-center">
+                            <UserPlus className="mr-2 h-4 w-4 text-muted-foreground" />
+                            <FormLabel className="font-medium">Allow Anyone to Create Polls</FormLabel>
+                          </div>
+                          <p className="text-sm text-muted-foreground">
+                            When enabled, anyone can create polls. When disabled, only admins can create polls.
+                          </p>
+                        </div>
+                        <FormControl>
+                          <Switch
+                            checked={field.value}
+                            onCheckedChange={field.onChange}
+                          />
+                        </FormControl>
+                      </FormItem>
+                    )}
+                  />
+                  
+                  <Button type="submit" className="w-full" disabled={isSavingSettings}>
+                    <Save className="mr-2 h-4 w-4" />
+                    {isSavingSettings ? "Saving..." : "Save Settings"}
+                  </Button>
+                </form>
+              </Form>
             </CardContent>
           </Card>
         </TabsContent>

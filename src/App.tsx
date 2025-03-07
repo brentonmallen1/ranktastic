@@ -14,6 +14,7 @@ import AdminLogin from "./pages/AdminLogin";
 import AdminDashboard from "./pages/admin/Dashboard";
 import AdminSettings from "./pages/admin/Settings";
 import ProtectedRoute from "./components/ProtectedRoute";
+import ProtectedCreatePoll from "./components/ProtectedCreatePoll";
 import { useDatabase } from "./lib/db";
 
 const queryClient = new QueryClient({
@@ -36,7 +37,14 @@ const AppContent = () => {
   return (
     <Routes>
       <Route path="/" element={<Index />} />
-      <Route path="/create" element={<CreatePoll />} />
+      <Route 
+        path="/create" 
+        element={
+          <ProtectedCreatePoll>
+            <CreatePoll />
+          </ProtectedCreatePoll>
+        } 
+      />
       <Route path="/help" element={<HelpPage />} />
       <Route path="/poll/:id" element={<PollPage />} />
       
