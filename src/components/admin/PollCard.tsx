@@ -40,6 +40,12 @@ const PollCard = ({
     }
   };
 
+  // Function to open the edit dialog
+  const handleEditPoll = () => {
+    console.log("Opening edit dialog for poll:", poll.id);
+    setIsEditDialogOpen(true);
+  };
+
   return (
     <>
       <Card className="h-full flex flex-col">
@@ -89,7 +95,7 @@ const PollCard = ({
           <Button 
             variant="outline" 
             size="sm"
-            onClick={() => setIsEditDialogOpen(true)}
+            onClick={handleEditPoll}
           >
             <Edit className="h-4 w-4 mr-2" />
             Edit
