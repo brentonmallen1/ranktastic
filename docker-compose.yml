@@ -35,6 +35,7 @@ services:
       - NODE_ENV=production
       - CORS_ORIGIN=http://localhost:8080,http://frontend:80,http://frontend,*
       - DEBUG=express:*
+      - LOG_LEVEL=debug
     restart: on-failure
     networks:
       - app-network
@@ -44,6 +45,11 @@ services:
       timeout: 5s
       retries: 5
       start_period: 10s
+    # Add these options to prevent disconnects
+    deploy:
+      restart_policy:
+        condition: on-failure
+        max_attempts: 5
 
 networks:
   app-network:
