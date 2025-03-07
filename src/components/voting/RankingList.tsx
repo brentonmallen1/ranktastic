@@ -3,8 +3,8 @@ import { DragDropContext, Droppable, Draggable, DropResult } from "@hello-pangea
 import { ArrowUpDown, ChevronDown, ChevronUp, GripVertical } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
-import { UseFormReturn, UseFormSetValue } from "react-hook-form";
-import { VotingFormValues } from "./VotingForm";
+import { UseFormReturn } from "react-hook-form";
+import { VotingFormValues } from "./VoterForm";
 
 interface RankingListProps {
   form: UseFormReturn<VotingFormValues>;
