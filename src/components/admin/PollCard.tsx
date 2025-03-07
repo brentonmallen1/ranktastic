@@ -46,7 +46,7 @@ const PollCard = ({
         <CardHeader>
           <div className="flex justify-between items-start">
             <CardTitle className="text-xl flex-1 mr-2">{poll.title}</CardTitle>
-            <Badge variant={poll.isOpen ? "success" : "destructive"}>
+            <Badge variant={poll.isOpen ? "default" : "destructive"}>
               {poll.isOpen ? "Open" : "Closed"}
             </Badge>
           </div>
