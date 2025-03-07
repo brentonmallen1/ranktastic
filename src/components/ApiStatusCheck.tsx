@@ -18,24 +18,12 @@ const ApiStatusCheck = () => {
     setIsChecking(true);
     
     try {
-      // Test a direct ping to the backend port to see if it's accessible
-      const testDirectBackend = async () => {
-        try {
-          // We can't actually do this from the browser due to CORS
-          // But we'll log it for information
-          console.log(`Note: Direct backend check at http://backend:3001/health isn't possible from browser`);
-          return false;
-        } catch (error) {
-          console.log('Direct backend test error:', error);
-          return false;
-        }
-      };
-      
+      // First try the direct backend health endpoint through the Nginx proxy
       const healthEndpoint = `${API_BASE_URL}/health`;
       console.log(`Testing API connection at: ${healthEndpoint}`);
       
-      // Prevent caching
-      const response = await fetch(healthEndpoint, {
+      // Prevent caching with random query parameter
+      const response = await fetch(`${healthEndpoint}?_=${Date.now()}`, {
         cache: 'no-cache',
         headers: {
           'Cache-Control': 'no-cache',
@@ -70,8 +58,6 @@ const ApiStatusCheck = () => {
       
       // Check if it's HTML (error case)
       if (text.includes('<!DOCTYPE html>') || text.includes('<html')) {
-        await testDirectBackend();
-        
         setStatus('error');
         setMessage('Received HTML instead of JSON - API routing misconfiguration in Nginx');
         setDebugInfo(prev => ({ 
@@ -82,7 +68,14 @@ const ApiStatusCheck = () => {
             'Verify backend service is running (check Docker logs)',
             'Ensure backend container is healthy in docker-compose',
             'Check backend service port (3001) is accessible',
-            'Verify Nginx proxy_pass directive is correct'
+            'Verify Nginx proxy_pass directive is correct',
+            'Make sure backend is properly handling requests to /health'
+          ],
+          nextSteps: [
+            '1. Check if the backend is running with docker-compose ps',
+            '2. View backend logs with docker-compose logs backend',
+            '3. Try accessing the backend directly at http://localhost:3001/health',
+            '4. Review Nginx configuration and restart with docker-compose restart frontend'
           ]
         }));
         throw new Error('Received HTML instead of JSON - API proxy misconfiguration');
@@ -158,6 +151,17 @@ const ApiStatusCheck = () => {
           <div className="mt-2 p-2 bg-gray-100 dark:bg-gray-800 rounded overflow-auto max-h-60">
             <p className="font-semibold">Debug Information:</p>
             <pre className="whitespace-pre-wrap text-xs">{JSON.stringify(debugInfo, null, 2)}</pre>
+            
+            {debugInfo.nextSteps && (
+              <>
+                <p className="font-semibold mt-2">Recommended Troubleshooting Steps:</p>
+                <ul className="list-disc pl-5">
+                  {debugInfo.nextSteps.map((step: string, index: number) => (
+                    <li key={index}>{step}</li>
+                  ))}
+                </ul>
+              </>
+            )}
           </div>
         )}
       </div>
