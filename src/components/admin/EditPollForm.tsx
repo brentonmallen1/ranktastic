@@ -10,6 +10,16 @@ import type { Poll } from "@/lib/db";
 import { editPollFormSchema, type EditPollFormValues } from "./EditPollSchema";
 import PollFormFields from "./PollFormFields";
 import EditPollFormActions from "./EditPollFormActions";
+import { 
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 interface EditPollFormProps {
   poll: Poll;
@@ -22,6 +32,8 @@ const EditPollForm = ({ poll, isOpen, onClose, onPollUpdated }: EditPollFormProp
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [optionsChanged, setOptionsChanged] = useState(false);
+  const [showConfirmDialog, setShowConfirmDialog] = useState(false);
+  const [pendingValues, setPendingValues] = useState<EditPollFormValues | null>(null);
 
   // Form setup with default values
   const form = useForm<EditPollFormValues>({
@@ -42,6 +54,8 @@ const EditPollForm = ({ poll, isOpen, onClose, onPollUpdated }: EditPollFormProp
         options: poll.options,
       });
       setOptionsChanged(false);
+      setShowConfirmDialog(false);
+      setPendingValues(null);
     }
   }, [poll, isOpen, form]);
 
@@ -61,7 +75,18 @@ const EditPollForm = ({ poll, isOpen, onClose, onPollUpdated }: EditPollFormProp
     }
   }, [watchOptions, poll.options, isOpen]);
 
-  const onSubmit = async (values: EditPollFormValues) => {
+  const handleFormSubmit = (values: EditPollFormValues) => {
+    if (optionsChanged) {
+      // Store values and show confirmation dialog
+      setPendingValues(values);
+      setShowConfirmDialog(true);
+    } else {
+      // Proceed with update
+      processUpdate(values);
+    }
+  };
+
+  const processUpdate = async (values: EditPollFormValues) => {
     setIsSubmitting(true);
 
     try {
@@ -112,21 +137,53 @@ const EditPollForm = ({ poll, isOpen, onClose, onPollUpdated }: EditPollFormProp
     }
   };
 
+  const handleConfirmClearVotes = () => {
+    if (pendingValues) {
+      processUpdate(pendingValues);
+    }
+    setShowConfirmDialog(false);
+  };
+
+  const handleCancelClearVotes = () => {
+    setShowConfirmDialog(false);
+    setPendingValues(null);
+  };
+
   return (
-    <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
-      <DialogContent className="sm:max-w-md md:max-w-lg">
-        <DialogHeader>
-          <DialogTitle>Edit Poll</DialogTitle>
-        </DialogHeader>
-        
-        <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-            <PollFormFields form={form} optionsChanged={optionsChanged} />
-            <EditPollFormActions isSubmitting={isSubmitting} onClose={onClose} />
-          </form>
-        </Form>
-      </DialogContent>
-    </Dialog>
+    <>
+      <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
+        <DialogContent className="sm:max-w-md md:max-w-lg">
+          <DialogHeader>
+            <DialogTitle>Edit Poll</DialogTitle>
+          </DialogHeader>
+          
+          <Form {...form}>
+            <form onSubmit={form.handleSubmit(handleFormSubmit)} className="space-y-4">
+              <PollFormFields form={form} optionsChanged={optionsChanged} />
+              <EditPollFormActions isSubmitting={isSubmitting} onClose={onClose} />
+            </form>
+          </Form>
+        </DialogContent>
+      </Dialog>
+
+      <AlertDialog open={showConfirmDialog} onOpenChange={setShowConfirmDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Clear Existing Votes?</AlertDialogTitle>
+            <AlertDialogDescription>
+              You've changed the poll options. This will erase all existing votes for this poll.
+              Do you want to continue?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={handleCancelClearVotes}>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={handleConfirmClearVotes}>
+              Yes, Clear Votes
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </>
   );
 };
 
