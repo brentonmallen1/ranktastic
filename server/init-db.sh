@@ -70,7 +70,9 @@ echo "=========================================="
 ls -la /app/data || mkdir -p /app/data
 echo "Data directory status: $?"
 
-# Start server directly - we're not using the server.js file anymore
-# but using index.js directly which has all the API routes
-echo "Starting server..."
+# Make sure we're using the correct server file
+echo "Using server file: /app/index.js"
+
+# Start the server directly with node
+echo "Starting server with index.js..."
 exec node /app/index.js

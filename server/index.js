@@ -328,6 +328,30 @@ app.post('/votes', async (req, res) => {
   }
 });
 
+// Check if email has voted
+app.get('/polls/:id/hasVoted', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { email } = req.query;
+    
+    if (!email) {
+      return res.status(400).json({ error: 'Email parameter is required' });
+    }
+    
+    const db = await initDb();
+    
+    const vote = await db.get(
+      'SELECT * FROM votes WHERE pollId = ? AND voterEmail = ?',
+      [id, email]
+    );
+    
+    res.json({ hasVoted: !!vote });
+  } catch (error) {
+    console.error('Error checking if voter has voted:', error);
+    res.status(500).json({ error: 'Failed to check voter status', details: error.message });
+  }
+});
+
 // Start server
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
