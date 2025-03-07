@@ -5,7 +5,7 @@ import { getAllPolls, useDatabase } from "@/lib/db";
 import type { Poll } from "@/lib/db";
 import PollCard from "./PollCard";
 
-const AdminClosedPolls = () => {
+const AdminFinalizedPolls = () => {
   const { toast } = useToast();
   const { initialized } = useDatabase();
   const [polls, setPolls] = useState<Poll[]>([]);
@@ -14,13 +14,13 @@ const AdminClosedPolls = () => {
   const fetchPolls = async () => {
     setLoading(true);
     try {
-      console.log("Fetching closed polls...");
+      console.log("Fetching finalized polls...");
       const allPolls = await getAllPolls();
       console.log("All polls fetched:", allPolls);
-      // Filter only closed polls
-      const closedPolls = allPolls.filter(poll => !poll.isOpen);
-      console.log("Closed polls:", closedPolls);
-      setPolls(closedPolls);
+      // Filter only finalized polls
+      const finalizedPolls = allPolls.filter(poll => !poll.isOpen);
+      console.log("Finalized polls:", finalizedPolls);
+      setPolls(finalizedPolls);
     } catch (error) {
       console.error("Failed to fetch polls:", error);
       toast({
@@ -35,7 +35,7 @@ const AdminClosedPolls = () => {
 
   useEffect(() => {
     if (initialized) {
-      console.log("Database initialized, fetching closed polls");
+      console.log("Database initialized, fetching finalized polls");
       fetchPolls();
     } else {
       console.log("Database not initialized yet");
@@ -49,7 +49,7 @@ const AdminClosedPolls = () => {
   if (polls.length === 0) {
     return (
       <div className="text-center py-10">
-        <p className="text-lg text-gray-500">No closed polls found.</p>
+        <p className="text-lg text-gray-500">No finalized polls found.</p>
       </div>
     );
   }
@@ -67,4 +67,4 @@ const AdminClosedPolls = () => {
   );
 };
 
-export default AdminClosedPolls;
+export default AdminFinalizedPolls;

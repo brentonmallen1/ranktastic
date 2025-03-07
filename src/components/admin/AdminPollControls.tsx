@@ -20,7 +20,7 @@ const AdminPollControls = ({ pollId, isOpen, onPollUpdated }: AdminPollControlsP
   const { toast } = useToast();
   const navigate = useNavigate();
   const [isDeleting, setIsDeleting] = useState(false);
-  const [isClosing, setIsClosing] = useState(false);
+  const [isFinalizing, setIsFinalizing] = useState(false);
   
   // Only render if user is authenticated as admin and we have a valid pollId
   if (!isAuthenticated() || !pollId) {
@@ -28,25 +28,25 @@ const AdminPollControls = ({ pollId, isOpen, onPollUpdated }: AdminPollControlsP
     return null;
   }
 
-  const handleClosePoll = async () => {
+  const handleFinalizePoll = async () => {
     try {
-      setIsClosing(true);
-      console.log("Closing poll:", pollId);
+      setIsFinalizing(true);
+      console.log("Finalizing poll:", pollId);
       await closePoll(pollId);
       toast({
-        title: "Poll closed",
-        description: "The poll has been closed successfully",
+        title: "Poll finalized",
+        description: "The poll has been finalized successfully",
       });
       onPollUpdated();
     } catch (error) {
-      console.error("Error closing poll:", error);
+      console.error("Error finalizing poll:", error);
       toast({
         title: "Error",
-        description: "Failed to close the poll",
+        description: "Failed to finalize the poll",
         variant: "destructive",
       });
     } finally {
-      setIsClosing(false);
+      setIsFinalizing(false);
     }
   };
 
@@ -101,11 +101,11 @@ const AdminPollControls = ({ pollId, isOpen, onPollUpdated }: AdminPollControlsP
             <Button 
               variant="outline" 
               size="sm" 
-              onClick={handleClosePoll}
-              disabled={isClosing}
+              onClick={handleFinalizePoll}
+              disabled={isFinalizing}
             >
               <Lock className="h-4 w-4 mr-1" />
-              {isClosing ? "Closing..." : "Close Poll"}
+              {isFinalizing ? "Finalizing..." : "Finalize Poll"}
             </Button>
           )}
           <Dialog>

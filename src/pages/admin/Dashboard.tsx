@@ -8,7 +8,7 @@ import { useDatabase } from "@/lib/db";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import AdminOpenPolls from "@/components/admin/AdminOpenPolls";
-import AdminClosedPolls from "@/components/admin/AdminClosedPolls";
+import AdminFinalizedPolls from "@/components/admin/AdminClosedPolls";
 import { useToast } from "@/hooks/use-toast";
 
 const AdminDashboard = () => {
@@ -82,13 +82,13 @@ const AdminDashboard = () => {
       <Tabs defaultValue="open" onValueChange={setActiveTab} value={activeTab} className="w-full">
         <TabsList className="grid w-full grid-cols-2 mb-4">
           <TabsTrigger value="open">Open Polls</TabsTrigger>
-          <TabsTrigger value="closed">Closed Polls</TabsTrigger>
+          <TabsTrigger value="finalized">Finalized Polls</TabsTrigger>
         </TabsList>
         <TabsContent value="open">
           <AdminOpenPolls />
         </TabsContent>
-        <TabsContent value="closed">
-          <AdminClosedPolls />
+        <TabsContent value="finalized">
+          <AdminFinalizedPolls />
         </TabsContent>
       </Tabs>
     </div>

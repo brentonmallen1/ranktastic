@@ -1,7 +1,7 @@
 
 import React from "react";
 import { format } from "date-fns";
-import { Calendar } from "lucide-react";
+import { Calendar, Shield } from "lucide-react";
 import { Card, CardHeader, CardContent, CardTitle, CardDescription } from "@/components/ui/card";
 import type { Poll } from "@/lib/db";
 
@@ -30,8 +30,9 @@ const PollHeader = ({ poll }: PollHeaderProps) => {
           )}
           <div className="flex items-center">
             Status: <span className={`ml-1 ${poll.isOpen ? "text-green-600" : "text-red-600"}`}>
-              {poll.isOpen ? "Open" : "Closed"}
+              {poll.isOpen ? "Open" : "Finalized"}
             </span>
+            {!poll.isOpen && <Shield className="h-4 w-4 ml-1 text-red-600" />}
           </div>
         </div>
       </CardContent>

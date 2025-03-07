@@ -4,7 +4,7 @@ import { useNavigate } from "react-router-dom";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Calendar, BarChart3, Edit, Lock, Share2 } from "lucide-react";
+import { Calendar, BarChart3, Edit, Lock, Share2, Shield } from "lucide-react";
 import { format } from "date-fns";
 import type { Poll } from "@/lib/db";
 import EditPollForm from "./EditPollForm";
@@ -47,6 +47,17 @@ const PollCard = ({
   // Function to open the edit dialog
   const handleEditPoll = (e: React.MouseEvent) => {
     e.stopPropagation(); // Prevent card click event from triggering
+    
+    // Check if the poll is finalized
+    if (!poll.isOpen) {
+      toast({
+        title: "Poll Finalized",
+        description: "This poll has been finalized and cannot be edited.",
+        variant: "destructive",
+      });
+      return;
+    }
+    
     console.log("Opening edit dialog for poll:", poll.id);
     setIsEditDialogOpen(true);
   };
@@ -87,7 +98,7 @@ const PollCard = ({
           <div className="flex justify-between items-start">
             <CardTitle className="text-xl flex-1 mr-2">{poll.title}</CardTitle>
             <Badge variant={poll.isOpen ? "default" : "destructive"}>
-              {poll.isOpen ? "Open" : "Closed"}
+              {poll.isOpen ? "Open" : "Finalized"}
             </Badge>
           </div>
           <p className="text-xs text-muted-foreground mt-1">ID: {poll.id}</p>
@@ -130,14 +141,26 @@ const PollCard = ({
             {poll.isOpen ? "View Poll" : "View Results"}
           </Button>
           
-          <Button 
-            variant="outline" 
-            size="sm"
-            onClick={handleEditPoll}
-          >
-            <Edit className="h-4 w-4 mr-2" />
-            Edit
-          </Button>
+          {poll.isOpen ? (
+            <Button 
+              variant="outline" 
+              size="sm"
+              onClick={handleEditPoll}
+            >
+              <Edit className="h-4 w-4 mr-2" />
+              Edit
+            </Button>
+          ) : (
+            <Button 
+              variant="outline" 
+              size="sm"
+              className="opacity-70"
+              disabled
+            >
+              <Shield className="h-4 w-4 mr-2" />
+              Finalized
+            </Button>
+          )}
           
           <Button 
             variant="outline" 
@@ -158,7 +181,7 @@ const PollCard = ({
               }}
             >
               <Lock className="h-4 w-4 mr-2" />
-              Close
+              Finalize
             </Button>
           )}
         </CardFooter>
