@@ -64,14 +64,25 @@ echo "=========================================="
 # Verify directory structure
 echo "========== Directory Structure =========="
 ls -la /app
+ls -la /app/data || mkdir -p /app/data && chmod 777 /app/data
 echo "=========================================="
 
 # Ensure we have direct access to data directory
-ls -la /app/data || mkdir -p /app/data
-echo "Data directory status: $?"
+echo "Data directory status: $(ls -la /app/data || echo 'Not found')"
+
+# Check if index.js exists
+if [ ! -f "/app/index.js" ]; then
+    echo "ERROR: index.js not found!"
+    ls -la /app
+    exit 1
+fi
 
 # Make sure we're using the correct server file
 echo "Using server file: /app/index.js"
+
+# Print first few lines of index.js for debugging
+echo "First 20 lines of index.js:"
+head -n 20 /app/index.js
 
 # Start the server directly with node
 echo "Starting server with index.js..."

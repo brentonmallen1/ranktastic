@@ -1,4 +1,3 @@
-
 const express = require('express');
 const cors = require('cors');
 const { v4: uuidv4 } = require('uuid');
@@ -44,7 +43,7 @@ app.use(cors(corsOptions));
 
 // Health check endpoint
 app.get('/health', (req, res) => {
-  res.json({ status: 'ok', timestamp: new Date().toISOString() });
+  res.json({ status: 'ok' });
 });
 
 // API Root endpoint
