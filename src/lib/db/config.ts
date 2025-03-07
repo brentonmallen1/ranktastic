@@ -39,6 +39,9 @@ export const safeParseResponse = async (response: Response) => {
   const contentType = response.headers.get('content-type');
   console.log(`Response content-type: ${contentType}`);
   
+  // Log the URL that's being accessed
+  console.log(`Response URL: ${response.url}`);
+  
   const text = await response.text();
   
   // If no content (like 204 responses), return null
@@ -46,7 +49,7 @@ export const safeParseResponse = async (response: Response) => {
     return null;
   }
   
-  console.log(`Response text snippet: ${text.substring(0, 100)}...`);
+  console.log(`Response text snippet (first 150 chars): ${text.substring(0, 150)}...`);
   
   // If it's JSON, parse it
   if (contentType?.includes('application/json') || (text.trim().startsWith('{') && text.trim().endsWith('}'))) {
@@ -61,6 +64,7 @@ export const safeParseResponse = async (response: Response) => {
   // Not JSON, handle appropriately
   if (text.includes('<!DOCTYPE html>') || text.includes('<html')) {
     console.error('Received HTML instead of JSON. API endpoint is likely incorrect or not configured properly.');
+    console.error('This could be because the request is being routed to the frontend server instead of the backend API.');
     throw new Error('Received HTML instead of API JSON response. Server configuration issue.');
   }
   

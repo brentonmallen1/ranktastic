@@ -19,7 +19,6 @@ services:
     build:
       context: ./server
       dockerfile: Dockerfile
-    # Explicitly exposing port for backend service
     ports:
       - "3001:3001"
     volumes:
@@ -27,8 +26,7 @@ services:
     environment:
       - PORT=3001
       - NODE_ENV=production
-      # Updated CORS_ORIGIN to include both frontend URLs
-      - CORS_ORIGIN=http://localhost:8080,http://frontend:80
+      - CORS_ORIGIN=http://localhost:8080,http://frontend:80,http://frontend
     restart: unless-stopped
     networks:
       - app-network

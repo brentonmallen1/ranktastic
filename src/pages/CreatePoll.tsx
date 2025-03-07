@@ -5,6 +5,7 @@ import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import PollCreator from "@/components/PollCreator";
 import SharePoll from "@/components/SharePoll";
+import ApiStatusCheck from "@/components/ApiStatusCheck";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useDatabase } from "@/lib/db";
 
@@ -35,6 +36,10 @@ const CreatePoll = () => {
               Create a ranked-choice poll to gather opinions and make decisions. 
               Add options, set an optional expiration date, and share with voters.
             </p>
+            
+            {/* API Status Check for debugging */}
+            <ApiStatusCheck />
+            
             <PollCreator onPollCreated={handlePollCreated} />
           </div>
         </main>
