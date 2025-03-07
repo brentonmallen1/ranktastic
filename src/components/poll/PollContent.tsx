@@ -2,6 +2,7 @@
 import React, { useState } from "react";
 import PollActions from "./PollActions";
 import PollDisplay from "./PollDisplay";
+import { isAdmin } from "@/lib/auth";
 import type { Poll } from "@/lib/db";
 
 interface PollContentProps {
@@ -11,10 +12,17 @@ interface PollContentProps {
 }
 
 const PollContent = ({ poll, pollId, onVoteSubmitted }: PollContentProps) => {
+  const isAdminUser = isAdmin();
+  // Default to showing results only if:
+  // 1. Poll is finalized (not open) OR
+  // 2. User is an admin and they want to see results
   const [showResults, setShowResults] = useState(!poll.isOpen);
 
   const toggleResults = () => {
-    setShowResults(!showResults);
+    // Only admin can toggle between results and voting
+    if (isAdminUser) {
+      setShowResults(!showResults);
+    }
   };
 
   return (
@@ -30,7 +38,11 @@ const PollContent = ({ poll, pollId, onVoteSubmitted }: PollContentProps) => {
         pollId={pollId}
         showResults={showResults}
         onVoteSubmitted={() => {
-          setShowResults(true);
+          // For admin users, show the results after voting
+          // For regular users, the thank you dialog will be shown instead
+          if (isAdminUser) {
+            setShowResults(true);
+          }
           onVoteSubmitted();
         }}
       />

@@ -15,6 +15,8 @@ import type { Poll } from "@/lib/db";
 import VoterInfoFields from "./VoterInfoFields";
 import RankableOptions from "./RankableOptions";
 import ClosedPollState from "./ClosedPollState";
+import ThankYouDialog from "./ThankYouDialog";
+import { isAdmin } from "@/lib/auth";
 
 // Schema for form validation
 const formSchema = z.object({
@@ -34,6 +36,9 @@ const VoterForm = ({ poll, onVoteSubmitted }: VoterFormProps) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { toast } = useToast();
   const navigate = useNavigate();
+  const [showThankYouDialog, setShowThankYouDialog] = useState(false);
+  const [submittedVoterName, setSubmittedVoterName] = useState("");
+  const isAdminUser = isAdmin();
   
   // Create a copy of options for reordering
   const [rankedOptions, setRankedOptions] = useState([...poll.options]);
@@ -75,11 +80,17 @@ const VoterForm = ({ poll, onVoteSubmitted }: VoterFormProps) => {
         rankings: rankedOptions,
       });
       
-      // Show success message
-      toast({
-        title: "Vote Submitted",
-        description: "Your vote has been recorded successfully!",
-      });
+      // If the user is an admin, just show a toast notification
+      if (isAdminUser) {
+        toast({
+          title: "Vote Submitted",
+          description: "Your vote has been recorded successfully!",
+        });
+      } else {
+        // For non-admin users, show the thank you dialog
+        setSubmittedVoterName(values.voterName);
+        setShowThankYouDialog(true);
+      }
       
       // Reset form and notify parent
       form.reset();
@@ -101,46 +112,55 @@ const VoterForm = ({ poll, onVoteSubmitted }: VoterFormProps) => {
   }
 
   return (
-    <Card className="glass glass-hover animate-scale-in max-w-3xl mx-auto transition-smooth">
-      <CardHeader>
-        <CardTitle className="text-2xl">{poll.title}</CardTitle>
-        {poll.description && (
-          <CardDescription>{poll.description}</CardDescription>
-        )}
-      </CardHeader>
-      <CardContent>
-        <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-            <VoterInfoFields form={form} />
-            
-            <Separator />
-            
-            <RankableOptions 
-              form={form} 
-              rankedOptions={rankedOptions} 
-              setRankedOptions={setRankedOptions} 
-            />
-            
-            <CardFooter className="px-0 pb-0 pt-6">
-              <Button 
-                type="submit" 
-                disabled={isSubmitting}
-                className="transition-smooth w-full"
-              >
-                {isSubmitting ? (
-                  "Submitting Vote..."
-                ) : (
-                  <>
-                    <Check className="mr-2 h-4 w-4" />
-                    Submit Vote
-                  </>
-                )}
-              </Button>
-            </CardFooter>
-          </form>
-        </Form>
-      </CardContent>
-    </Card>
+    <>
+      <Card className="glass glass-hover animate-scale-in max-w-3xl mx-auto transition-smooth">
+        <CardHeader>
+          <CardTitle className="text-2xl">{poll.title}</CardTitle>
+          {poll.description && (
+            <CardDescription>{poll.description}</CardDescription>
+          )}
+        </CardHeader>
+        <CardContent>
+          <Form {...form}>
+            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+              <VoterInfoFields form={form} />
+              
+              <Separator />
+              
+              <RankableOptions 
+                form={form} 
+                rankedOptions={rankedOptions} 
+                setRankedOptions={setRankedOptions} 
+              />
+              
+              <CardFooter className="px-0 pb-0 pt-6">
+                <Button 
+                  type="submit" 
+                  disabled={isSubmitting}
+                  className="transition-smooth w-full"
+                >
+                  {isSubmitting ? (
+                    "Submitting Vote..."
+                  ) : (
+                    <>
+                      <Check className="mr-2 h-4 w-4" />
+                      Submit Vote
+                    </>
+                  )}
+                </Button>
+              </CardFooter>
+            </form>
+          </Form>
+        </CardContent>
+      </Card>
+
+      <ThankYouDialog 
+        isOpen={showThankYouDialog}
+        pollId={poll.id}
+        voterName={submittedVoterName}
+        onClose={() => setShowThankYouDialog(false)}
+      />
+    </>
   );
 };
 

@@ -4,11 +4,11 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Shield } from "lucide-react";
 
-interface ClosedPollStateProps {
+interface FinalizedPollStateProps {
   pollId: string;
 }
 
-const FinalizedPollState = ({ pollId }: ClosedPollStateProps) => {
+const FinalizedPollState = ({ pollId }: FinalizedPollStateProps) => {
   const navigate = useNavigate();
 
   return (

@@ -1,6 +1,7 @@
 
 import React from "react";
 import { Button } from "@/components/ui/button";
+import { isAdmin } from "@/lib/auth";
 
 interface PollActionsProps {
   isOpen: boolean;
@@ -9,7 +10,10 @@ interface PollActionsProps {
 }
 
 const PollActions = ({ isOpen, showResults, toggleResults }: PollActionsProps) => {
-  if (!isOpen) return null;
+  // Only show poll actions to admin users
+  const isAdminUser = isAdmin();
+  
+  if (!isOpen || !isAdminUser) return null;
   
   return (
     <div className="mb-6 flex justify-center">

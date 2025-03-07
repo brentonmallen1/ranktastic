@@ -1,12 +1,13 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Calendar, BarChart3, Edit, Lock, Share2, Shield } from "lucide-react";
+import { Calendar, BarChart3, Edit, Lock, Share2, Shield, Users } from "lucide-react";
 import { format } from "date-fns";
 import type { Poll } from "@/lib/db";
+import { getVotesForPoll } from "@/lib/db";
 import EditPollForm from "./EditPollForm";
 import { useToast } from "@/hooks/use-toast";
 import { getBaseUrl } from "@/lib/db/config";
@@ -27,6 +28,21 @@ const PollCard = ({
   const navigate = useNavigate();
   const { toast } = useToast();
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [voteCount, setVoteCount] = useState<number | null>(null);
+
+  useEffect(() => {
+    const fetchVoteCount = async () => {
+      try {
+        const votes = await getVotesForPoll(poll.id);
+        setVoteCount(votes.length);
+      } catch (error) {
+        console.error("Failed to fetch vote count:", error);
+        setVoteCount(0);
+      }
+    };
+
+    fetchVoteCount();
+  }, [poll.id]);
 
   const handleViewPoll = () => {
     // Directly navigate to the poll page
@@ -118,6 +134,10 @@ const PollCard = ({
                 Expires: {format(new Date(poll.expiresAt), "MMM d, yyyy")}
               </div>
             )}
+            <div className="flex items-center text-sm text-muted-foreground">
+              <Users className="h-4 w-4 mr-2" />
+              Votes: {voteCount !== null ? voteCount : "Loading..."}
+            </div>
           </div>
           <div className="space-y-2">
             <p className="text-sm font-medium">Poll Options:</p>
@@ -138,7 +158,7 @@ const PollCard = ({
             }}
           >
             <BarChart3 className="h-4 w-4 mr-2" />
-            {poll.isOpen ? "View Poll" : "View Results"}
+            View Poll
           </Button>
           
           {poll.isOpen ? (
