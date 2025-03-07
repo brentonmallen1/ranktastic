@@ -84,6 +84,7 @@ const RankableOptions = ({ form, rankedOptions, setRankedOptions }: RankableOpti
                             <div 
                               {...provided.dragHandleProps}
                               className="cursor-grab active:cursor-grabbing p-1"
+                              aria-label="Drag to reorder"
                             >
                               <GripVertical className="h-5 w-5 text-muted-foreground" />
                             </div>
@@ -92,7 +93,7 @@ const RankableOptions = ({ form, rankedOptions, setRankedOptions }: RankableOpti
                               {index + 1}
                             </span>
                             
-                            <span className="flex-1">{option}</span>
+                            <span className="flex-1 truncate">{option}</span>
                             
                             <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-smooth">
                               <Button
@@ -101,7 +102,7 @@ const RankableOptions = ({ form, rankedOptions, setRankedOptions }: RankableOpti
                                 size="icon"
                                 onClick={() => moveOptionUp(index)}
                                 disabled={index === 0}
-                                className="h-8 w-8"
+                                className="h-8 w-8 shrink-0"
                               >
                                 <ChevronUp className="h-4 w-4" />
                               </Button>
@@ -112,11 +113,16 @@ const RankableOptions = ({ form, rankedOptions, setRankedOptions }: RankableOpti
                                 size="icon"
                                 onClick={() => moveOptionDown(index)}
                                 disabled={index === rankedOptions.length - 1}
-                                className="h-8 w-8"
+                                className="h-8 w-8 shrink-0"
                               >
                                 <ChevronDown className="h-4 w-4" />
                               </Button>
                             </div>
+                            
+                            {/* Create a placeholder element for dragging that maintains dimensions */}
+                            {snapshot.isDragging && (
+                              <div className="fixed top-0 left-0 w-0 h-0 pointer-events-none" />
+                            )}
                           </li>
                         )}
                       </Draggable>
