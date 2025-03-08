@@ -1,11 +1,14 @@
+
 // Settings management
 export interface AppSettings {
   allowPublicPolls: boolean;
+  clearVotesOnOptionsChange: boolean;
   // Add more settings here as needed
 }
 
 const DEFAULT_SETTINGS: AppSettings = {
   allowPublicPolls: true, // Default to allowing anyone to create polls
+  clearVotesOnOptionsChange: true, // Default to clearing votes when options change
 };
 
 export const getSettings = (): AppSettings => {

@@ -10,6 +10,7 @@ import type { Poll } from "@/lib/db";
 import { editPollFormSchema, type EditPollFormValues } from "./EditPollSchema";
 import PollFormFields from "./PollFormFields";
 import EditPollFormActions from "./EditPollFormActions";
+import { getSettings } from "@/lib/auth";
 import { 
   AlertDialog,
   AlertDialogAction,
@@ -34,6 +35,7 @@ const EditPollForm = ({ poll, isOpen, onClose, onPollUpdated }: EditPollFormProp
   const [optionsChanged, setOptionsChanged] = useState(false);
   const [showConfirmDialog, setShowConfirmDialog] = useState(false);
   const [pendingValues, setPendingValues] = useState<EditPollFormValues | null>(null);
+  const settings = getSettings();
 
   // Form setup with default values
   const form = useForm<EditPollFormValues>({
@@ -76,13 +78,16 @@ const EditPollForm = ({ poll, isOpen, onClose, onPollUpdated }: EditPollFormProp
   }, [watchOptions, poll.options, isOpen]);
 
   const handleFormSubmit = (values: EditPollFormValues) => {
-    if (optionsChanged) {
+    // Check if options changed AND if we need to show confirmation
+    // If auto-clearing is enabled, we don't need confirmation
+    if (optionsChanged && !settings.clearVotesOnOptionsChange) {
       // Store values and show confirmation dialog
       setPendingValues(values);
       setShowConfirmDialog(true);
     } else {
-      // Proceed with update
-      processUpdate(values, false);
+      // For auto-clearing or when options haven't changed
+      const shouldClearVotes = optionsChanged && settings.clearVotesOnOptionsChange;
+      processUpdate(values, shouldClearVotes);
     }
   };
 
@@ -105,7 +110,9 @@ const EditPollForm = ({ poll, isOpen, onClose, onPollUpdated }: EditPollFormProp
         // If options changed and we should clear votes, do that
         if (shouldClearVotes) {
           try {
+            console.log(`Attempting to clear votes for poll ${poll.id}`);
             const clearSuccess = await clearPollVotes(poll.id);
+            
             if (clearSuccess) {
               toast({
                 title: "Poll updated",
@@ -162,8 +169,11 @@ const EditPollForm = ({ poll, isOpen, onClose, onPollUpdated }: EditPollFormProp
   };
 
   const handleCancelClearVotes = () => {
+    if (pendingValues) {
+      // If they cancel, still update but don't clear votes
+      processUpdate(pendingValues, false);
+    }
     setShowConfirmDialog(false);
-    setPendingValues(null);
   };
 
   return (
@@ -193,7 +203,9 @@ const EditPollForm = ({ poll, isOpen, onClose, onPollUpdated }: EditPollFormProp
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel onClick={handleCancelClearVotes}>Cancel</AlertDialogCancel>
+            <AlertDialogCancel onClick={handleCancelClearVotes}>
+              No, Preserve Votes
+            </AlertDialogCancel>
             <AlertDialogAction onClick={handleConfirmClearVotes}>
               Yes, Clear Votes
             </AlertDialogAction>

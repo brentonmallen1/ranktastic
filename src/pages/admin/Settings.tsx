@@ -1,10 +1,9 @@
-
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { z } from "zod";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Save, LogOut, KeyRound, User, Settings as SettingsIcon, ArrowLeft, UserPlus } from "lucide-react";
+import { Save, LogOut, KeyRound, User, Settings as SettingsIcon, ArrowLeft, UserPlus, Trash2 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -27,6 +26,7 @@ const credentialsSchema = z.object({
 
 const settingsSchema = z.object({
   allowPublicPolls: z.boolean(),
+  clearVotesOnOptionsChange: z.boolean(),
 });
 
 const AdminSettings = () => {
@@ -37,11 +37,9 @@ const AdminSettings = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [isSavingSettings, setIsSavingSettings] = useState(false);
   
-  // Get settings from localStorage
   const [settings, setSettings] = useState(getSettings());
 
   useEffect(() => {
-    // Load current admin username
     const currentUsername = getAdminUsername();
     setUsername(currentUsername || "admin");
   }, []);
@@ -60,6 +58,7 @@ const AdminSettings = () => {
     resolver: zodResolver(settingsSchema),
     defaultValues: {
       allowPublicPolls: settings.allowPublicPolls,
+      clearVotesOnOptionsChange: settings.clearVotesOnOptionsChange,
     },
   });
 
@@ -109,6 +108,7 @@ const AdminSettings = () => {
     try {
       updateSettings({
         allowPublicPolls: values.allowPublicPolls,
+        clearVotesOnOptionsChange: values.clearVotesOnOptionsChange,
       });
       
       setSettings(getSettings());
@@ -264,6 +264,31 @@ const AdminSettings = () => {
                           </div>
                           <p className="text-sm text-muted-foreground">
                             When enabled, anyone can create polls. When disabled, only admins can create polls.
+                          </p>
+                        </div>
+                        <FormControl>
+                          <Switch
+                            checked={field.value}
+                            onCheckedChange={field.onChange}
+                          />
+                        </FormControl>
+                      </FormItem>
+                    )}
+                  />
+                  
+                  <FormField
+                    control={settingsForm.control}
+                    name="clearVotesOnOptionsChange"
+                    render={({ field }) => (
+                      <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
+                        <div className="space-y-0.5">
+                          <div className="flex items-center">
+                            <Trash2 className="mr-2 h-4 w-4 text-muted-foreground" />
+                            <FormLabel className="font-medium">Clear Votes When Options Change</FormLabel>
+                          </div>
+                          <p className="text-sm text-muted-foreground">
+                            When enabled, all votes will be cleared automatically when poll options are changed. 
+                            When disabled, votes will be preserved even when options change.
                           </p>
                         </div>
                         <FormControl>

@@ -1,4 +1,3 @@
-
 import { API_BASE_URL, logRequest, logResponse, logError, safeParseResponse } from './config';
 import type { Poll } from './types';
 
