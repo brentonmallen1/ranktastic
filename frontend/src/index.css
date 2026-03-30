@@ -1,0 +1,84 @@
+@import "tailwindcss";
+
+@theme {
+  --color-background: hsl(0 0% 100%);
+  --color-foreground: hsl(240 10% 10%);
+  --color-card: hsl(0 0% 100%);
+  --color-card-foreground: hsl(240 10% 10%);
+  --color-popover: hsl(0 0% 100%);
+  --color-popover-foreground: hsl(240 10% 10%);
+  --color-primary: hsl(270 70% 50%);
+  --color-primary-foreground: hsl(0 0% 100%);
+  --color-secondary: hsl(270 20% 94%);
+  --color-secondary-foreground: hsl(270 50% 30%);
+  --color-muted: hsl(240 5% 94%);
+  --color-muted-foreground: hsl(240 5% 46%);
+  --color-accent: hsl(270 30% 92%);
+  --color-accent-foreground: hsl(270 50% 30%);
+  --color-destructive: hsl(0 84.2% 60.2%);
+  --color-destructive-foreground: hsl(0 0% 100%);
+  --color-border: hsl(240 5% 88%);
+  --color-input: hsl(240 5% 88%);
+  --color-ring: hsl(270 70% 50%);
+  --radius: 0.5rem;
+  /* Chart palette — light */
+  --color-chart-1: hsl(270 70% 52%);
+  --color-chart-2: hsl(210 80% 54%);
+  --color-chart-3: hsl(160 60% 42%);
+  --color-chart-4: hsl(35 90% 54%);
+  --color-chart-5: hsl(330 70% 54%);
+  --color-chart-6: hsl(190 70% 46%);
+  --color-chart-7: hsl(60 70% 44%);
+  --color-chart-8: hsl(15 80% 54%);
+  --color-chart-winner: hsl(45 90% 52%);
+  --color-chart-eliminated: hsl(240 5% 46%);
+}
+
+.dark {
+  --color-background: hsl(240 10% 4%);
+  --color-foreground: hsl(240 5% 90%);
+  --color-card: hsl(240 10% 8%);
+  --color-card-foreground: hsl(240 5% 90%);
+  --color-popover: hsl(240 10% 8%);
+  --color-popover-foreground: hsl(240 5% 90%);
+  --color-primary: hsl(270 70% 65%);
+  --color-primary-foreground: hsl(0 0% 100%);
+  --color-secondary: hsl(270 20% 16%);
+  --color-secondary-foreground: hsl(270 50% 80%);
+  --color-muted: hsl(240 10% 14%);
+  --color-muted-foreground: hsl(240 5% 55%);
+  --color-accent: hsl(270 40% 20%);
+  --color-accent-foreground: hsl(270 50% 80%);
+  --color-destructive: hsl(0 62.8% 50%);
+  --color-destructive-foreground: hsl(0 0% 100%);
+  --color-border: hsl(240 10% 14%);
+  --color-input: hsl(240 10% 14%);
+  --color-ring: hsl(270 70% 65%);
+  /* Chart palette — dark */
+  --color-chart-1: hsl(270 65% 68%);
+  --color-chart-2: hsl(210 75% 64%);
+  --color-chart-3: hsl(160 55% 52%);
+  --color-chart-4: hsl(35 85% 62%);
+  --color-chart-5: hsl(330 65% 64%);
+  --color-chart-6: hsl(190 65% 56%);
+  --color-chart-7: hsl(60 65% 56%);
+  --color-chart-8: hsl(15 75% 62%);
+  --color-chart-winner: hsl(45 85% 60%);
+  --color-chart-eliminated: hsl(240 5% 55%);
+}
+
+* {
+  border-color: var(--color-border);
+}
+
+html {
+  scroll-padding-top: 3.5rem; /* height of sticky navbar (h-14) */
+}
+
+body {
+  background-color: var(--color-background);
+  color: var(--color-foreground);
+  margin: 0;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}

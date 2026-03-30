@@ -1,58 +1,34 @@
-
 services:
-  frontend:
+  ranktastic:
     build:
       context: .
       dockerfile: Dockerfile
-    ports:
-      - "8080:80"
-    environment:
-      - VITE_API_URL=/api
-      - VITE_BASE_URL=${BASE_URL:-}
-    depends_on:
-      backend:
-        condition: service_healthy
+      args:
+        - APP_VERSION=${APP_VERSION:-dev}
+        - VITE_BASE_URL=${BASE_URL:-}
+    container_name: ranktastic
     restart: unless-stopped
-    networks:
-      - app-network
-    # Add health check for frontend
+    environment:
+      - DATA_PATH=/data
+      - SECRET_KEY=${SECRET_KEY}
+      - ADMIN_USERNAME=${ADMIN_USERNAME:-admin}
+      - ADMIN_PASSWORD=${ADMIN_PASSWORD:-changeme}
+      - BASE_URL=${BASE_URL:-http://localhost:${PORT:-8080}}
+      - EMAIL_ENABLED=${EMAIL_ENABLED:-false}
+      - SMTP_HOST=${SMTP_HOST:-}
+      - SMTP_PORT=${SMTP_PORT:-587}
+      - SMTP_USER=${SMTP_USER:-}
+      - SMTP_PASSWORD=${SMTP_PASSWORD:-}
+      - SMTP_FROM=${SMTP_FROM:-noreply@ranktastic.local}
+      - SMTP_TLS=${SMTP_TLS:-true}
+      - ALLOW_PUBLIC_POLLS=${ALLOW_PUBLIC_POLLS:-true}
+    volumes:
+      - ${DATA_PATH:-./data}:/data
+    ports:
+      - "${PORT:-8080}:80"
     healthcheck:
-      test: ["CMD", "wget", "-qO-", "http://localhost/health"]
+      test: ["CMD", "curl", "-f", "http://localhost/api/health"]
       interval: 30s
       timeout: 10s
       retries: 3
-      start_period: 10s
-
-  backend:
-    build:
-      context: ./server
-      dockerfile: Dockerfile
-    ports:
-      - "3001:3001"
-    volumes:
-      - ./server/data:/app/data
-    environment:
-      - PORT=3001
-      - NODE_ENV=production
-      - CORS_ORIGIN=http://localhost:8080,http://frontend:80,http://frontend,*
-      - DEBUG=express:*
-      - LOG_LEVEL=debug
-      - BASE_URL=${BASE_URL:-}
-    restart: on-failure
-    networks:
-      - app-network
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:3001/health"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-      start_period: 10s
-    # Add these options to prevent disconnects
-    deploy:
-      restart_policy:
-        condition: on-failure
-        max_attempts: 5
-
-networks:
-  app-network:
-    driver: bridge
+      start_period: 15s

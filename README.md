@@ -1,92 +1,179 @@
+<p align="center">
+  <img src="screenshots/ranktastic.png" alt="Ranktastic UI">
+</p>
 
-# RankChoice: Self-Hosted Ranked Choice Voting App
+<p align="center">
+  <img src="screenshots/poll_results2.png" alt="Ranktastic poll results">
+</p>
 
-A simple, elegant ranked choice voting application that can be self-hosted using Docker.
+# Ranktastic
+
+> Help you and your friends finally make a decision.
+
+Ranktastic is a self-hosted **ranked choice voting** app for groups. Create a poll, share a link, and let everyone rank their preferences — Ranktastic uses **Instant Runoff Voting (IRV)** to find the option with the broadest support.
+
+---
 
 ## Features
 
-- Create ranked choice polls with multiple options
-- Share polls via unique links
-- Vote by ranking options in order of preference
-- View detailed voting results and statistics
-- No login required - voters identify with name/email
-- Optional poll expiration
-- Self-hostable with Docker
-- **SQLite database storage** for persistent, shared data
+### Voting
+- **Ranked choice (IRV)** — voters rank options by preference; a winner emerges through elimination rounds
+- **Drag-and-drop ranking** — intuitive interface powered by @hello-pangea/dnd
+- **No account required** — voters identify with name and email only
+- **Duplicate vote prevention** — one vote per email address per poll
 
-## Self-Hosting Instructions
+### Polls
+- **Optional expiration** — polls auto-close at a set date and time
+- **Private polls** — invite-only mode restricts voting to a whitelist of emails
+- **Vote editing** — optionally let voters return and change their rankings
+- **Option randomization** — reduce position bias by shuffling options per voter
 
-### Using Docker Compose (Recommended)
+### Results
+- **Sankey vote flow diagram** — animated visualization of vote transfers through IRV rounds
+- **Charts** — first-choice distribution (pie) and final scores (bar)
+- **Full elimination round breakdown** — see exactly how the winner emerged
 
-1. Clone this repository:
-   ```
-   git clone https://github.com/yourusername/rankchoice.git
-   cd rankchoice
-   ```
+### Sharing
+- **QR code generation** — downloadable QR codes for each poll
+- **Native share API** — one-tap sharing on supported devices
+- **Copy link** — instant clipboard sharing
 
-2. Start the application:
-   ```
-   docker-compose up -d
-   ```
+### Email
+- **Vote verification** — optionally require voters to confirm via email link
+- **Results notifications** — voters and subscribers get emailed when a poll closes
+- **Notification subscriptions** — anyone can subscribe to poll results without voting
 
-3. Access the application at `http://localhost:8080`
+### Admin
+- **Dashboard** — manage all polls, view site-wide stats
+- **Poll controls** — close, reopen, clone, edit, clear votes, or delete
+- **Settings** — configure app behavior from the UI
 
-### Using Docker Directly
+### UI
+- **Dark / light theme** — persisted user preference
+- **Responsive design** — works on mobile and desktop
+- **Accessible** — Radix UI primitives with proper ARIA attributes
 
-1. Clone this repository:
-   ```
-   git clone https://github.com/yourusername/rankchoice.git
-   cd rankchoice
-   ```
+---
 
-2. Build the Docker image:
-   ```
-   docker build -t rankchoice .
-   ```
+## Tech Stack
 
-3. Run the container:
-   ```
-   docker run -d -p 8080:80 --name rankchoice rankchoice
-   ```
+| Layer | Technology |
+|---|---|
+| Backend | Python, FastAPI, SQLAlchemy, SQLite, aiosqlite |
+| Frontend | React 19, Vite, TypeScript, TailwindCSS 4 |
+| Auth | JWT tokens in HTTP-only cookies, bcrypt |
+| Package managers | `uv` (Python), `npm` (JS) |
+| Deployment | Docker Compose |
 
-4. Access the application at `http://localhost:8080`
+---
+
+## Quick Start
+
+### Requirements
+
+- Docker and Docker Compose
+
+### Steps
+
+```bash
+git clone https://github.com/yourusername/ranktastic.git
+cd ranktastic
+
+# Create your config (then edit it — at minimum set SECRET_KEY and ADMIN_PASSWORD)
+cp .env.example .env
+
+docker compose up -d
+```
+
+Open **http://localhost:8080** in your browser. Log in at `/admin/login` with the credentials you set.
+
+---
+
+## Configuration
+
+All configuration is done via environment variables. Copy `.env.example` to `.env` and edit as needed.
+
+### Required
+
+| Variable | Default | Description |
+|---|---|---|
+| `SECRET_KEY` | *(none)* | Secret for signing JWT tokens. Generate with: `openssl rand -base64 32` |
+| `ADMIN_USERNAME` | `admin` | Admin account username (set on first run) |
+| `ADMIN_PASSWORD` | `changeme` | Admin account password (set on first run) |
+
+### Network
+
+| Variable | Default | Description |
+|---|---|---|
+| `PORT` | `8080` | Host port the app is exposed on |
+| `BASE_URL` | `http://localhost:8080` | Public URL — used in share links and email links |
+
+### Data
+
+| Variable | Default | Description |
+|---|---|---|
+| `DATA_PATH` | `./data` | Host path for the SQLite database. For Unraid: `/mnt/user/appdata/ranktastic` |
+
+### Access Control
+
+| Variable | Default | Description |
+|---|---|---|
+| `ALLOW_PUBLIC_POLLS` | `true` | Set to `false` to restrict poll creation to the admin only |
+
+### Email (optional)
+
+Email is required for vote verification and results notifications.
+
+| Variable | Default | Description |
+|---|---|---|
+| `EMAIL_ENABLED` | `false` | Enable SMTP email sending |
+| `SMTP_HOST` | *(none)* | SMTP server hostname |
+| `SMTP_PORT` | `587` | SMTP server port |
+| `SMTP_USER` | *(none)* | SMTP username |
+| `SMTP_PASSWORD` | *(none)* | SMTP password |
+| `SMTP_FROM` | `noreply@ranktastic.local` | From address for outgoing emails |
+| `SMTP_TLS` | `true` | Set to `false` for plain SMTP (no TLS/STARTTLS) |
+
+---
 
 ## Development Setup
 
-If you want to run the application locally for development:
+### Requirements
 
-1. Install dependencies:
-   ```
-   npm install
-   cd server
-   npm install
-   cd ..
-   ```
+- Python 3.13+, [`uv`](https://docs.astral.sh/uv/)
+- Node.js, `npm`
+- [`just`](https://just.systems/) (optional but recommended)
 
-2. Start the backend server:
-   ```
-   cd server
-   npm run dev
-   ```
+### Setup
 
-3. In a separate terminal, start the frontend development server:
-   ```
-   npm run dev
-   ```
+```bash
+just setup        # Install backend + frontend dependencies
+cp .env.example .env
+just dev          # Start backend (port 8000) + frontend (port 5173)
+```
 
-4. Access the application at the URL shown in your terminal (usually http://localhost:5173)
+### Available Commands
+
+```bash
+just dev          # Start both dev servers
+just backend-dev  # Backend only (FastAPI with --reload)
+just frontend-dev # Frontend only (Vite HMR)
+just test         # Run backend tests + frontend type-check
+just build        # Build Docker images
+just up           # Start production stack
+just down         # Stop production stack
+just logs         # Tail container logs
+just redeploy     # Rebuild + restart
+```
+
+---
 
 ## Data Storage
 
-The application uses SQLite for data storage. All poll data is stored in a SQLite database file (`rankchoice.db`) located in the server's `data` directory. This provides:
+Poll data is stored in a single SQLite file in `DATA_PATH`. To back up or migrate, copy that file.
 
-- Persistent storage between application restarts
-- Shared data access for all users
-- No external database dependencies
-- Simple backup and migration (just copy the .db file)
-
-For production environments, consider setting up regular backups of the database file.
+---
 
 ## License
 
-Open source under the MIT License.
+MIT
