@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timezone
 from pydantic import BaseModel, field_validator, model_validator
 import json
 
@@ -74,6 +74,13 @@ class PollCreate(BaseModel):
             raise ValueError("Title cannot be empty")
         return v.strip()
 
+    @field_validator("expires_at")
+    @classmethod
+    def make_expires_at_aware(cls, v):
+        if v is not None and v.tzinfo is None:
+            return v.replace(tzinfo=timezone.utc)
+        return v
+
 
 class PollUpdate(BaseModel):
     title: str | None = None
@@ -85,6 +92,13 @@ class PollUpdate(BaseModel):
     require_email_verification: bool | None = None
     allow_vote_editing: bool | None = None
     randomize_options: bool | None = None
+
+    @field_validator("expires_at")
+    @classmethod
+    def make_expires_at_aware(cls, v):
+        if v is not None and v.tzinfo is None:
+            return v.replace(tzinfo=timezone.utc)
+        return v
 
 
 class PollResponse(BaseModel):

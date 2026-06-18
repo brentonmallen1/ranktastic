@@ -4,13 +4,22 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, func
 from app.database import get_db
+
+
+def ensure_aware(dt: datetime | None) -> datetime | None:
+    """Ensure datetime is timezone-aware (assumes UTC if naive)."""
+    if dt is None:
+        return None
+    if dt.tzinfo is None:
+        return dt.replace(tzinfo=timezone.utc)
+    return dt
 from app.models.poll import Poll
 from app.models.vote import Vote
 from app.models.notification import NotificationSubscription
 from app.schemas.poll import PollCreate, PollUpdate, PollResponse, normalize_options
 from app.schemas.results import PollResults
 from app.services.irv import compute_results
-from app.core.deps import get_current_user
+from app.core.deps import get_current_user, require_auth_unless_public_polls
 from app.models.user import User
 
 router = APIRouter(prefix="/polls")
@@ -48,7 +57,7 @@ async def list_polls(
 async def create_poll(
     data: PollCreate,
     db: AsyncSession = Depends(get_db),
-    _: User = Depends(get_current_user),
+    _: User | None = Depends(require_auth_unless_public_polls),
 ):
     poll = Poll(
         title=data.title,
@@ -69,7 +78,7 @@ async def create_poll(
 @router.get("/{poll_id}", response_model=PollResponse)
 async def get_poll(poll_id: str, db: AsyncSession = Depends(get_db)):
     poll = await _get_poll_or_404(poll_id, db)
-    if poll.is_open and poll.expires_at and poll.expires_at < datetime.now(timezone.utc):
+    if poll.is_open and poll.expires_at and ensure_aware(poll.expires_at) < datetime.now(timezone.utc):
         poll.is_open = False
         db.add(poll)
         await _send_close_notifications(poll_id, poll.title, db)

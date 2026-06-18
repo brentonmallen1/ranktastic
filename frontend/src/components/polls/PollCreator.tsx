@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useForm, useFieldArray } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { Plus, Trash2, X, ChevronDown, AlignLeft } from 'lucide-react';
+import { Plus, Trash2, X, ChevronDown, AlignLeft, List } from 'lucide-react';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -14,6 +14,7 @@ import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { useCreatePoll } from '@/api/polls';
 
 const schema = z.object({
@@ -47,6 +48,9 @@ export function PollCreator() {
   const [inviteEmail, setInviteEmail] = useState('');
   const [invitedEmails, setInvitedEmails] = useState<string[]>([]);
   const [inviteError, setInviteError] = useState('');
+  const [bulkModalOpen, setBulkModalOpen] = useState(false);
+  const [bulkText, setBulkText] = useState('');
+  const [bulkAppend, setBulkAppend] = useState(false);
 
   const form = useForm<FormValues>({
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -55,6 +59,7 @@ export function PollCreator() {
       title: '',
       description: '',
       options: [{ name: '', description: '' }, { name: '', description: '' }, { name: '', description: '' }],
+      expires_at: '',
       is_private: false,
       require_email_verification: false,
       allow_vote_editing: false,
@@ -62,7 +67,7 @@ export function PollCreator() {
     },
   });
 
-  const { fields, append, remove } = useFieldArray({ control: form.control, name: 'options' });
+  const { fields, append, remove, replace } = useFieldArray({ control: form.control, name: 'options' });
   const isPrivate = form.watch('is_private');
   const watchedOptions = form.watch('options');
 
@@ -86,6 +91,30 @@ export function PollCreator() {
   const removeInviteEmail = (email: string) => {
     setInvitedEmails(invitedEmails.filter((e) => e !== email));
   };
+
+  const handleBulkAdd = () => {
+    const newOptions = bulkText
+      .split('\n')
+      .map((line) => line.trim())
+      .filter((line) => line.length > 0)
+      .map((line) => ({ name: line.slice(0, 50), description: '' }));
+
+    if (bulkAppend) {
+      for (const opt of newOptions) {
+        append(opt);
+      }
+    } else {
+      replace(newOptions);
+    }
+
+    setBulkText('');
+    setBulkModalOpen(false);
+  };
+
+  const bulkOptionCount = bulkText
+    .split('\n')
+    .map((line) => line.trim())
+    .filter((line) => line.length > 0).length;
 
   const onSubmit = async (values: FormValues) => {
     const poll = await createPoll.mutateAsync({
@@ -211,9 +240,55 @@ export function PollCreator() {
                   </CollapsibleContent>
                 </Collapsible>
               ))}
-              <Button type="button" variant="outline" size="sm" onClick={() => append({ name: '', description: '' })}>
-                <Plus className="h-4 w-4 mr-1" /> Add Option
-              </Button>
+              <div className="flex gap-2">
+                <Button type="button" variant="outline" size="sm" onClick={() => append({ name: '', description: '' })}>
+                  <Plus className="h-4 w-4 mr-1" /> Add Option
+                </Button>
+                <Button type="button" variant="outline" size="sm" onClick={() => setBulkModalOpen(true)}>
+                  <List className="h-4 w-4 mr-1" /> Bulk Add
+                </Button>
+              </div>
+
+              <Dialog open={bulkModalOpen} onOpenChange={setBulkModalOpen}>
+                <DialogContent className="sm:max-w-md">
+                  <DialogHeader>
+                    <DialogTitle>Bulk Add Options</DialogTitle>
+                    <DialogDescription>
+                      Paste your options below, one per line. Empty lines will be ignored.
+                    </DialogDescription>
+                  </DialogHeader>
+                  <div className="space-y-4">
+                    <Textarea
+                      placeholder="Option 1&#10;Option 2&#10;Option 3&#10;..."
+                      value={bulkText}
+                      onChange={(e) => setBulkText(e.target.value)}
+                      className="min-h-[200px] max-h-[400px] resize-y"
+                    />
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="text-sm font-medium">Append to existing</p>
+                        <p className="text-xs text-muted-foreground">
+                          {bulkAppend ? 'Add to current options' : 'Replace all existing options'}
+                        </p>
+                      </div>
+                      <Switch checked={bulkAppend} onCheckedChange={setBulkAppend} />
+                    </div>
+                    {bulkOptionCount > 0 && (
+                      <p className="text-xs text-muted-foreground">
+                        {bulkOptionCount} option{bulkOptionCount !== 1 ? 's' : ''} will be {bulkAppend ? 'added' : 'set'}
+                      </p>
+                    )}
+                  </div>
+                  <DialogFooter>
+                    <Button type="button" variant="outline" onClick={() => setBulkModalOpen(false)}>
+                      Cancel
+                    </Button>
+                    <Button type="button" onClick={handleBulkAdd} disabled={bulkOptionCount === 0}>
+                      {bulkAppend ? 'Add Options' : 'Replace Options'}
+                    </Button>
+                  </DialogFooter>
+                </DialogContent>
+              </Dialog>
             </div>
             <FormField
               control={form.control}

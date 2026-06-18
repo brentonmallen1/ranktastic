@@ -13,7 +13,7 @@ dev:
 
 # Start backend only
 backend-dev:
-    cd backend && uv run uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
+    cd backend && exec uv run uvicorn app.main:app --reload --reload-exclude '.venv' --host 0.0.0.0 --port 8000
 
 # Start frontend only
 frontend-dev:
